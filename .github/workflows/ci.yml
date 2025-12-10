@@ -1,0 +1,33 @@
+name: MatchMyDuo CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # 1) 브랜치 타입 검사
+      - name: Validate Branch Type
+        run: |
+          BRANCH="${GITHUB_HEAD_REF}"
+          if [[ ! "$BRANCH" =~ ^(feat|fix|docs|style|refactor|test|chore|rename|remove|init)\/ ]]; then
+            echo "::error::Invalid branch type."
+            exit 1
+          fi
+
+      # 2) PR 제목 타입 검사
+      - name: Validate PR Title Type
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if [[ ! "$TITLE" =~ ^\[(FE|BE)\/(feat|fix|docs|style|refactor|test|chore|rename|remove|init)\] ]]; then
+            echo "::error::Invalid PR title type."
+            exit 1
+          fi
+
+      - name: Done
+        run: echo "All naming type checks passed."
