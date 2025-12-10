@@ -1,3 +1,28 @@
+## 🧑‍💻 개발 기간 & 팀원
+
+### **개발 기간**
+> 2025.12.10 (수) 09:00 ~ 2026.01.07 (수) 18:00
+
+### **팀원**
+| <a href="https://github.com/HongRae-Kim"><img src="https://github.com/HongRae-Kim.png" width="100"/></a> | <a href="https://github.com/kimwonmin"><img src="https://github.com/kimwonmin.png" width="100"/></a> | <a href="https://github.com/Boojw"><img src="https://github.com/Boojw.png" width="100"/></a> | <a href="https://github.com/seopgyu"><img src="https://github.com/seopgyu.png" width="100"/></a> | <a href="https://github.com/ascal34"><img src="https://github.com/ascal34.png" width="100"/></a> | <a href="https://github.com/KyeongwonBang"><img src="https://github.com/KyeongwonBang.png" width="100"/></a> |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **김홍래** | **김원민** | **부종우** | **김규섭** | **조영주** | **방경원** |
+| 팀장 | 팀원 | 팀원 | 팀원 | 팀원 | 팀원 |
+
+---
+
+### **🔄 작업 순서**
+
+1. **이슈 생성** → 작업 단위 정의
+2. **브랜치 생성** → main 브랜치에서 이슈별 작업 브랜치 생성
+3. **Commit & Push**
+4. **PR 생성 & 코드 리뷰** → 최소 1명 승인 필요
+5. **Merge & 브랜치 정리**
+    - 리뷰 완료 후 main 브랜치로 Merge
+    - Merge 후 이슈별 작업 브랜치 삭제
+
+---
+
 ### 📌네이밍 규칙 총정리
 
 | 구분 | 네이밍 예시 | 내용 |
