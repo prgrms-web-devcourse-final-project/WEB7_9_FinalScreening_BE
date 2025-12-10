@@ -7,7 +7,9 @@ spring:
   profiles:
     active: dev
     include: secret
-
+  datasource:
+    hikari:
+      auto-commit: false
   jpa:
     open-in-view: false
     properties:
@@ -23,7 +25,10 @@ springdoc:
 
 logging:
   level:
-    com.matchmyduo: DEBUG
+    org.hibernate.orm.jdbc.bind: WARN
+    org.hibernate.orm.jdbc.extract: WARN
+    org.springframework.transaction.interceptor: INFO
+    com.matchmyduo: INFO
 
 custom:
   jwt:
