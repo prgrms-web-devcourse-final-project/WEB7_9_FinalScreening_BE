@@ -31,7 +31,12 @@ public class Party {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "closed_at", nullable = false)
+    // 자동 파티완료 된 경우
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
+
+    // 수동 파티완료, 자동 파티완료 된 경우의 시간
+    @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
 
@@ -40,13 +45,23 @@ public class Party {
         this.leaderId = leaderId;
         this.status = PartyStatus.ACTIVE;
         this.createdAt = LocalDateTime.now();
-        this.closedAt = this.createdAt.plusHours(6);
-    }
+        this.expiresAt = this.createdAt.plusHours(6);
+        }
 
 
+    // 파티장이 수동 파티완료 처리
     public void closeParty() {
         if (this.status == PartyStatus.ACTIVE) {
             this.status = PartyStatus.CLOSED;
+            this.closedAt = LocalDateTime.now(); // 현재 시간 기록
+        }
+    }
+
+    // 스케줄러가 자동 파티완료 처리
+    public void expireParty() {
+        if (this.status == PartyStatus.ACTIVE) {
+            this.status = PartyStatus.CLOSED;
+            this.closedAt = this.expiresAt; // 만료 예정 시간이 곧 종료 시간
         }
     }
 }
