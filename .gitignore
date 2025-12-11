@@ -56,6 +56,3 @@ replay_pid*
 # --- Env files (local secrets) ---
 .env
 .env.*
-
-# --- yml (local secrets) ---
-**/application-secret*.yml
