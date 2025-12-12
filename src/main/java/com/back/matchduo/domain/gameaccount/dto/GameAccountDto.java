@@ -36,7 +36,17 @@ public class GameAccountDto {
         private String gameNickname;
         private String gameTag;
         private String gameType;
+        private String puuid;
         private Long userId;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DeleteResponse {
+        private String message;
+        private Long gameAccountId;
     }
 }
 

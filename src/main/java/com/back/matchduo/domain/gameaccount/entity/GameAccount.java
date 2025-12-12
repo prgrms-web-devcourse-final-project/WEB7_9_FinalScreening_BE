@@ -28,15 +28,19 @@ public class GameAccount extends BaseEntity {
     @Column(name = "game_type")
     private String gameType;
 
+    @Column(name = "puuid")
+    private String puuid;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
     @Builder
-    public GameAccount(String gameNickname, String gameTag, String gameType, User user) {
+    public GameAccount(String gameNickname, String gameTag, String gameType, String puuid, User user) {
         this.gameNickname = gameNickname;
         this.gameTag = gameTag;
         this.gameType = gameType;
+        this.puuid = puuid;
         this.user = user;
     }
 }

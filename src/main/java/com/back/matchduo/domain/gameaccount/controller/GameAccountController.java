@@ -38,4 +38,19 @@ public class GameAccountController {
         GameAccountDto.Response response = gameAccountService.getGameAccount(gameAccountId);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 게임 계정 삭제 (연동 해제)
+     * @param gameAccountId 게임 계정 ID
+     * @return 삭제 성공 응답
+     */
+    @DeleteMapping("/{gameAccountId}")
+    public ResponseEntity<GameAccountDto.DeleteResponse> deleteGameAccount(
+            @PathVariable Long gameAccountId) {
+        gameAccountService.deleteGameAccount(gameAccountId);
+        return ResponseEntity.ok(GameAccountDto.DeleteResponse.builder()
+                .message("게임 계정 연동이 해제되었습니다.")
+                .gameAccountId(gameAccountId)
+                .build());
+    }
 }
