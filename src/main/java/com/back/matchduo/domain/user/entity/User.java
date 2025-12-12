@@ -1,8 +1,19 @@
 package com.back.matchduo.domain.user.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,9 +28,27 @@ public class User {
     @Column(length = 20, nullable = false, unique = true)
     private String nickname;
 
-    @Column(length = 100, nullable = false)
+    @Column(length = 100)
     private String comment;
 
-    @Column(length = 255, nullable = false)
+    @Column(nullable = true)
     private String profile_image;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdDate;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedDate;
+
+    @CreatedDate
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedDate;
+
+    @Column(nullable = false)
+    private Boolean agree_termsofuse = true;
+
+    @Column(length = 100, nullable = false)
+    private String verification_code;
 }
