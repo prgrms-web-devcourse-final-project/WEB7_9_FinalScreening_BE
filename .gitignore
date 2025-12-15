@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Claude ###
+.claude/
+
 # --- OS junk ---
 .DS_Store
 Thumbs.db
