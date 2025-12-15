@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Claude ###
+.claude/
+
 # --- OS junk ---
 .DS_Store
 Thumbs.db
@@ -56,3 +59,6 @@ replay_pid*
 # --- Env files (local secrets) ---
 .env
 .env.*
+
+# --- yml (local secrets) ---
+**/application-secret*.yml
