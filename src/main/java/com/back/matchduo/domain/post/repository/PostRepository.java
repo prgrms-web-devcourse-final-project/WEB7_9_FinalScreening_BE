@@ -14,6 +14,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 모집글 목록 조회 (무한 스크롤 - Cursor 기반)
     @Query("SELECT p FROM Post p WHERE " +
+            "p.isActive = true AND " +
             "(:cursor IS NULL OR p.id < :cursor) AND " +
             "(:status IS NULL OR p.status = :status) AND " +
             "(:queueType IS NULL OR p.queueType = :queueType) AND " +
