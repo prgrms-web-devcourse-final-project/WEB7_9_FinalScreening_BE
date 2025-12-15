@@ -41,7 +41,22 @@ public enum CustomErrorCode {
     ALREADY_JOINED_PARTY(HttpStatus.BAD_REQUEST, "이미 참여 중인 파티입니다."),
 
     // 4. Post (모집글) - 추후 구현 시 사용
-    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 모집글을 찾을 수 없습니다.");
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 모집글을 찾을 수 없습니다."),
+
+    // 5. Chat (채팅)
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+    CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "종료된 채팅방에는 메시지를 보낼 수 없습니다."),
+    CHAT_SAME_SENDER_RECEIVER(HttpStatus.BAD_REQUEST, "채팅방의 sender와 receiver는 동일할 수 없습니다."),
+    CHAT_INVALID_USER_ID(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 ID입니다."),
+    CHAT_INVALID_CHAT_ROOM(HttpStatus.BAD_REQUEST, "채팅방 정보가 올바르지 않습니다."),
+    CHAT_INVALID_SENDER(HttpStatus.BAD_REQUEST, "발신자 정보가 올바르지 않습니다."),
+    CHAT_INVALID_MESSAGE_TYPE(HttpStatus.BAD_REQUEST, "메시지 타입이 올바르지 않습니다."),
+    CHAT_INVALID_MESSAGE_CONTENT(HttpStatus.BAD_REQUEST, "메시지 내용은 비어 있을 수 없습니다."),
+    CHAT_INVALID_MESSAGE(HttpStatus.BAD_REQUEST, "메시지 정보가 올바르지 않습니다."),
+    CHAT_ROOM_MISMATCH(HttpStatus.BAD_REQUEST, "다른 채팅방의 메시지로 읽음 처리를 할 수 없습니다."),
+    CHAT_INVALID_SESSION(HttpStatus.BAD_REQUEST, "메시지의 세션 정보가 올바르지 않습니다."),
+    CHAT_READ_STATE_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "읽음 상태의 채팅방 정보가 올바르지 않습니다."),
+    CHAT_USER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "해당 채팅방의 참여자가 아닙니다.");
 
     private final HttpStatus status;
     private final String message;
