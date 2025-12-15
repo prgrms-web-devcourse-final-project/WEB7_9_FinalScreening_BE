@@ -35,7 +35,7 @@ public class GameAccountService {
      * @return 생성된 게임 계정 정보
      */
     public GameAccountResponse createGameAccount(GameAccountCreateRequest request) {
-        // 임시: User 조회 (나중에 인증 정보로 대체)
+        // 임시: User 조회
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. userId: " + request.getUserId()));
 
@@ -63,7 +63,7 @@ public class GameAccountService {
             // Riot API 호출 실패 시에도 계정은 생성 (puuid는 null)
         }
 
-        // 게임 계정 생성 (puuid 포함)
+        // 게임 계정 생성
         GameAccount gameAccount = GameAccount.builder()
                 .gameNickname(request.getGameNickname())
                 .gameTag(request.getGameTag())
