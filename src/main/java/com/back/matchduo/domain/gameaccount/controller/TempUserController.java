@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +93,7 @@ public class TempUserController {
     /**
      * 리플렉션을 사용하여 User 엔티티 생성
      * User 엔티티를 수정하지 않고 protected 생성자를 호출하고 필드를 설정
+     * BaseEntity를 상속받으므로 createdAt, updatedAt은 JPA Auditing이 자동으로 설정함
      */
     private User createUserWithReflection(String email, String password, String nickname, String verificationCode)
             throws Exception {
@@ -103,15 +103,13 @@ public class TempUserController {
         User user = constructor.newInstance();
 
         // 필드 설정
-        LocalDateTime now = LocalDateTime.now();
-        
+        // createdAt, updatedAt은 BaseEntity의 @EntityListeners(AuditingEntityListener.class)로 자동 설정됨
         setField(user, "email", email);
         setField(user, "password", password);
         setField(user, "nickname", nickname);
         setField(user, "verification_code", verificationCode);
-        setField(user, "createdDate", now);
-        setField(user, "updatedDate", now);
-        setField(user, "deletedDate", null);
+        // BaseEntity의 isActive는 기본값이 true이므로 설정 불필요
+        // BaseEntity의 deletedAt은 기본값이 null이므로 설정 불필요
 
         return user;
     }
