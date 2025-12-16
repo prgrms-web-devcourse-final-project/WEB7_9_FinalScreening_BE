@@ -1,11 +1,9 @@
 package com.back.matchduo.global.entity;
 
 import jakarta.persistence.MappedSuperclass;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.SQLRestriction;
 
 @MappedSuperclass
-@FilterDef(name = "softDeleteFilter")
-@Filter(name = "softDeleteFilter", condition = "is_active = true")
+@SQLRestriction("is_active = true")
 public abstract class SoftDeletableEntity extends BaseEntity {
 }
