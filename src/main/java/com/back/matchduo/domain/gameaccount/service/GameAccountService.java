@@ -69,17 +69,7 @@ public class GameAccountService {
         }
 
         // 소환사 아이콘 조회 (롤만, 계정 생성 시)
-        Integer profileIconId = null;
-        if (puuid != null && (GAME_TYPE_LEAGUE_OF_LEGENDS.equals(request.getGameType()) || 
-            GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(request.getGameType()))) {
-            try {
-                RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(puuid);
-                profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
-                log.debug("소환사 아이콘 조회 성공: profileIconId={}", profileIconId);
-            } catch (Exception e) {
-                log.warn("소환사 아이콘 조회 실패: puuid={}, error={}", puuid, e.getMessage());
-            }
-        }
+        Integer profileIconId = fetchProfileIconId(puuid, request.getGameType());
 
         // 게임 계정 생성
         GameAccount gameAccount = GameAccount.builder()
@@ -194,17 +184,7 @@ public class GameAccountService {
         }
 
         // 프로필 아이콘 갱신 (롤만, 계정 수정 시)
-        Integer profileIconId = null;
-        if (puuid != null && (GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameAccount.getGameType()) || 
-            GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(gameAccount.getGameType()))) {
-            try {
-                RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(puuid);
-                profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
-                log.debug("소환사 아이콘 조회 성공: profileIconId={}", profileIconId);
-            } catch (Exception e) {
-                log.warn("소환사 아이콘 조회 실패: puuid={}, error={}", puuid, e.getMessage());
-            }
-        }
+        Integer profileIconId = fetchProfileIconId(puuid, gameAccount.getGameType());
 
         // 게임 계정 정보 업데이트
         gameAccount.update(request.getGameNickname(), request.getGameTag(), puuid);
@@ -252,44 +232,48 @@ public class GameAccountService {
     }
 
     /**
-     * 프로필 아이콘 갱신 (랭크 정보 갱신 시 함께 호출)
-     * @param gameAccount 게임 계정
-     * @return 갱신된 프로필 아이콘 ID (조회 실패 시 null)
+     * 프로필 아이콘 ID 조회 (공통 메서드)
+     * @param puuid PUUID
+     * @param gameType 게임 타입
+     * @return 프로필 아이콘 ID (조회 실패 시 null)
      */
-    public Integer refreshProfileIconId(GameAccount gameAccount) {
-        String gameType = gameAccount.getGameType();
-        // LEAGUE_OF_LEGENDS 또는 리그 오브 레전드가 아니면 null 반환
+    private Integer fetchProfileIconId(String puuid, String gameType) {
+        if (puuid == null || puuid.isEmpty()) {
+            return null;
+        }
+
         if (!GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameType) && 
             !GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(gameType)) {
             return null;
         }
 
-        // puuid가 없으면 조회 불가
-        if (gameAccount.getPuuid() == null || gameAccount.getPuuid().isEmpty()) {
-            log.debug("puuid가 없어 소환사 아이콘을 조회할 수 없습니다. gameAccountId={}", 
-                    gameAccount.getGameAccountId());
-            return null;
-        }
-
         try {
-            RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(
-                    gameAccount.getPuuid()
-            );
+            RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(puuid);
             Integer profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
-            
-            if (profileIconId != null) {
-                gameAccount.updateProfileIconId(profileIconId);
-                gameAccountRepository.save(gameAccount);
-                log.info("프로필 아이콘 갱신 완료: gameAccountId={}, profileIconId={}", 
-                        gameAccount.getGameAccountId(), profileIconId);
-            }
-            
+            log.debug("소환사 아이콘 조회 성공: profileIconId={}", profileIconId);
             return profileIconId;
         } catch (Exception e) {
-            log.warn("프로필 아이콘 갱신 실패: gameAccountId={}, puuid={}, error={}", 
-                    gameAccount.getGameAccountId(), gameAccount.getPuuid(), e.getMessage());
+            log.warn("소환사 아이콘 조회 실패: puuid={}, error={}", puuid, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 프로필 아이콘 갱신 (랭크 정보 갱신 시 함께 호출)
+     * @param gameAccount 게임 계정
+     * @return 갱신된 프로필 아이콘 ID (조회 실패 시 null)
+     */
+    public Integer refreshProfileIconId(GameAccount gameAccount) {
+        Integer profileIconId = fetchProfileIconId(gameAccount.getPuuid(), gameAccount.getGameType());
+        
+        if (profileIconId != null) {
+            gameAccount.updateProfileIconId(profileIconId);
+            gameAccountRepository.save(gameAccount);
+            log.info("프로필 아이콘 갱신 완료: gameAccountId={}, profileIconId={}", 
+                    gameAccount.getGameAccountId(), profileIconId);
+        }
+        
+        return profileIconId;
     }
 
     /**
