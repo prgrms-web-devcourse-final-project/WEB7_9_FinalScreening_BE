@@ -68,20 +68,33 @@ public class GameAccountService {
             // Riot API 호출 실패 시에도 계정은 생성 (puuid는 null)
         }
 
+        // 소환사 아이콘 조회 (롤만, 계정 생성 시)
+        Integer profileIconId = null;
+        if (puuid != null && (GAME_TYPE_LEAGUE_OF_LEGENDS.equals(request.getGameType()) || 
+            GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(request.getGameType()))) {
+            try {
+                RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(puuid);
+                profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
+                log.debug("소환사 아이콘 조회 성공: profileIconId={}", profileIconId);
+            } catch (Exception e) {
+                log.warn("소환사 아이콘 조회 실패: puuid={}, error={}", puuid, e.getMessage());
+            }
+        }
+
         // 게임 계정 생성
         GameAccount gameAccount = GameAccount.builder()
                 .gameNickname(request.getGameNickname())
                 .gameTag(request.getGameTag())
                 .gameType(request.getGameType())
                 .puuid(puuid)
+                .profileIconId(profileIconId)
                 .user(user)
                 .build();
 
         GameAccount savedGameAccount = gameAccountRepository.save(gameAccount);
 
-        // 소환사 아이콘 조회 (LEAGUE_OF_LEGENDS만)
-        Integer profileIconId = getProfileIconId(savedGameAccount);
-        String profileIconUrl = getProfileIconUrl(profileIconId);
+        // 프로필 아이콘 URL 생성
+        String profileIconUrl = getProfileIconUrl(savedGameAccount.getProfileIconId());
 
         return GameAccountResponse.builder()
                 .gameAccountId(savedGameAccount.getGameAccountId())
@@ -107,9 +120,8 @@ public class GameAccountService {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
 
-        // 소환사 아이콘 조회 (LEAGUE_OF_LEGENDS만)
-        Integer profileIconId = getProfileIconId(gameAccount);
-        String profileIconUrl = getProfileIconUrl(profileIconId);
+        // DB에서 프로필 아이콘 ID 가져오기
+        String profileIconUrl = getProfileIconUrl(gameAccount.getProfileIconId());
 
         return GameAccountResponse.builder()
                 .gameAccountId(gameAccount.getGameAccountId())
@@ -117,7 +129,7 @@ public class GameAccountService {
                 .gameTag(gameAccount.getGameTag())
                 .gameType(gameAccount.getGameType())
                 .puuid(gameAccount.getPuuid())
-                .profileIconId(profileIconId)
+                .profileIconId(gameAccount.getProfileIconId())
                 .profileIconUrl(profileIconUrl)
                 .userId(gameAccount.getUser().getId())
                 .createdAt(gameAccount.getCreatedAt())
@@ -136,9 +148,8 @@ public class GameAccountService {
         
         return gameAccounts.stream()
                 .map(gameAccount -> {
-                    // 소환사 아이콘 조회 (LEAGUE_OF_LEGENDS만)
-                    Integer profileIconId = getProfileIconId(gameAccount);
-                    String profileIconUrl = getProfileIconUrl(profileIconId);
+                    // DB에서 프로필 아이콘 URL 생성
+                    String profileIconUrl = getProfileIconUrl(gameAccount.getProfileIconId());
                     
                     return GameAccountResponse.builder()
                             .gameAccountId(gameAccount.getGameAccountId())
@@ -146,7 +157,7 @@ public class GameAccountService {
                             .gameTag(gameAccount.getGameTag())
                             .gameType(gameAccount.getGameType())
                             .puuid(gameAccount.getPuuid())
-                            .profileIconId(profileIconId)
+                            .profileIconId(gameAccount.getProfileIconId())
                             .profileIconUrl(profileIconUrl)
                             .userId(gameAccount.getUser().getId())
                             .createdAt(gameAccount.getCreatedAt())
@@ -182,13 +193,28 @@ public class GameAccountService {
             puuid = gameAccount.getPuuid();
         }
 
+        // 프로필 아이콘 갱신 (롤만, 계정 수정 시)
+        Integer profileIconId = null;
+        if (puuid != null && (GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameAccount.getGameType()) || 
+            GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(gameAccount.getGameType()))) {
+            try {
+                RiotApiDto.SummonerResponse summonerResponse = riotApiClient.getSummonerByPuuid(puuid);
+                profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
+                log.debug("소환사 아이콘 조회 성공: profileIconId={}", profileIconId);
+            } catch (Exception e) {
+                log.warn("소환사 아이콘 조회 실패: puuid={}, error={}", puuid, e.getMessage());
+            }
+        }
+
         // 게임 계정 정보 업데이트
         gameAccount.update(request.getGameNickname(), request.getGameTag(), puuid);
+        if (profileIconId != null) {
+            gameAccount.updateProfileIconId(profileIconId);
+        }
         GameAccount updatedGameAccount = gameAccountRepository.save(gameAccount);
 
-        // 소환사 아이콘 조회 (LEAGUE_OF_LEGENDS만)
-        Integer profileIconId = getProfileIconId(updatedGameAccount);
-        String profileIconUrl = getProfileIconUrl(profileIconId);
+        // 프로필 아이콘 URL 생성
+        String profileIconUrl = getProfileIconUrl(updatedGameAccount.getProfileIconId());
 
         return GameAccountResponse.builder()
                 .gameAccountId(updatedGameAccount.getGameAccountId())
@@ -196,7 +222,7 @@ public class GameAccountService {
                 .gameTag(updatedGameAccount.getGameTag())
                 .gameType(updatedGameAccount.getGameType())
                 .puuid(updatedGameAccount.getPuuid())
-                .profileIconId(profileIconId)
+                .profileIconId(updatedGameAccount.getProfileIconId())
                 .profileIconUrl(profileIconUrl)
                 .userId(updatedGameAccount.getUser().getId())
                 .createdAt(updatedGameAccount.getCreatedAt())
@@ -226,14 +252,13 @@ public class GameAccountService {
     }
 
     /**
-     * 소환사 아이콘 ID 조회
-     * LEAGUE_OF_LEGENDS 게임 타입이고 puuid가 있을 때만 조회합니다.
+     * 프로필 아이콘 갱신 (랭크 정보 갱신 시 함께 호출)
      * @param gameAccount 게임 계정
-     * @return 소환사 아이콘 ID (조회 실패 시 null)
+     * @return 갱신된 프로필 아이콘 ID (조회 실패 시 null)
      */
-    private Integer getProfileIconId(GameAccount gameAccount) {
+    public Integer refreshProfileIconId(GameAccount gameAccount) {
         String gameType = gameAccount.getGameType();
-        // LEAGUE_OF_LEGENDS 또는 "리그 오브 레전드"가 아니면 null 반환
+        // LEAGUE_OF_LEGENDS 또는 리그 오브 레전드가 아니면 null 반환
         if (!GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameType) && 
             !GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(gameType)) {
             return null;
@@ -251,11 +276,17 @@ public class GameAccountService {
                     gameAccount.getPuuid()
             );
             Integer profileIconId = summonerResponse != null ? summonerResponse.getProfileIconId() : null;
-            log.debug("소환사 아이콘 조회 성공: gameAccountId={}, profileIconId={}", 
-                    gameAccount.getGameAccountId(), profileIconId);
+            
+            if (profileIconId != null) {
+                gameAccount.updateProfileIconId(profileIconId);
+                gameAccountRepository.save(gameAccount);
+                log.info("프로필 아이콘 갱신 완료: gameAccountId={}, profileIconId={}", 
+                        gameAccount.getGameAccountId(), profileIconId);
+            }
+            
             return profileIconId;
         } catch (Exception e) {
-            log.warn("소환사 아이콘 조회 실패: gameAccountId={}, puuid={}, error={}", 
+            log.warn("프로필 아이콘 갱신 실패: gameAccountId={}, puuid={}, error={}", 
                     gameAccount.getGameAccountId(), gameAccount.getPuuid(), e.getMessage());
             return null;
         }

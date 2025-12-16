@@ -31,16 +31,20 @@ public class GameAccount extends BaseEntity {
     @Column(name = "puuid")
     private String puuid;
 
+    @Column(name = "profile_icon_id")
+    private Integer profileIconId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
     @Builder
-    public GameAccount(String gameNickname, String gameTag, String gameType, String puuid, User user) {
+    public GameAccount(String gameNickname, String gameTag, String gameType, String puuid, Integer profileIconId, User user) {
         this.gameNickname = gameNickname;
         this.gameTag = gameTag;
         this.gameType = gameType;
         this.puuid = puuid;
+        this.profileIconId = profileIconId;
         this.user = user;
     }
 
@@ -57,5 +61,13 @@ public class GameAccount extends BaseEntity {
         }
         // createdAt은 @CreatedDate와 updatable = false로 보호됨
         // updatedAt은 @LastModifiedDate로 자동 업데이트됨
+    }
+
+    /**
+     * 프로필 아이콘 ID 업데이트
+     * @param profileIconId 새로운 프로필 아이콘 ID
+     */
+    public void updateProfileIconId(Integer profileIconId) {
+        this.profileIconId = profileIconId;
     }
 }

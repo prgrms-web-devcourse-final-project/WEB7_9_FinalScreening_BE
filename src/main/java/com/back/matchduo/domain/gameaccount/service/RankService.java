@@ -24,6 +24,7 @@ public class RankService {
     private final RankRepository rankRepository;
     private final GameAccountRepository gameAccountRepository;
     private final RiotApiClient riotApiClient;
+    private final GameAccountService gameAccountService;
 
     /**
      * 승률 계산 (소수점 첫째 자리까지 반올림)
@@ -109,6 +110,9 @@ public class RankService {
                     }
                 })
                 .collect(Collectors.toList());
+
+        // 프로필 아이콘도 함께 갱신
+        gameAccountService.refreshProfileIconId(gameAccount);
 
         log.info("랭크 정보 갱신 완료: gameAccountId={}, 갱신된 랭크 개수={}", gameAccountId, savedRanks.size());
         return savedRanks;

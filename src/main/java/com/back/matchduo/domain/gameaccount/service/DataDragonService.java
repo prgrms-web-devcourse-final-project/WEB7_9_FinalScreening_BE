@@ -10,10 +10,8 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * Data Dragon API 버전 관리 서비스
- * 인메모리 캐싱을 사용하여 최신 버전을 자동으로 갱신합니다.
- */
+// Data Dragon API 버전 관리 서비스
+// 인메모리 캐싱을 사용하여 최신 버전을 자동으로 갱신합니다.
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,27 +26,20 @@ public class DataDragonService {
     private String cachedVersion;
     private LocalDateTime lastUpdated;
     
-    /**
-     * 애플리케이션 시작 시 즉시 최신 버전 가져오기
-     */
+    // 애플리케이션 시작 시 즉시 최신 버전 가져오기
     @PostConstruct
     public void init() {
         refreshVersion();
     }
     
-    /**
-     * 주기적으로 최신 버전 갱신 (매일 자정)
-     */
+    // 주기적으로 최신 버전 갱신 (매일 자정)
     @Scheduled(cron = "0 0 0 * * *")
     public void scheduledUpdate() {
         refreshVersion();
     }
     
-    /**
-     * 최신 버전 조회
-     * 캐시가 만료되었으면 자동으로 갱신합니다.
-     * @return Data Dragon 최신 버전
-     */
+    // 최신 버전 조회
+    // 캐시가 만료되었으면 자동으로 갱신
     public String getLatestVersion() {
         if (cachedVersion == null || isCacheExpired()) {
             refreshVersion();
@@ -56,10 +47,8 @@ public class DataDragonService {
         return cachedVersion;
     }
     
-    /**
-     * 버전 갱신
-     * Data Dragon API를 호출하여 최신 버전을 가져옵니다.
-     */
+    // 버전 갱신
+    // Data Dragon API를 호출하여 최신 버전을 가져옵니다.
     private void refreshVersion() {
         try {
             String[] versions = restTemplate.getForObject(VERSIONS_API_URL, String[].class);
@@ -82,10 +71,7 @@ public class DataDragonService {
         }
     }
     
-    /**
-     * 캐시 만료 여부 확인
-     * @return 캐시가 만료되었으면 true
-     */
+    // 캐시 만료 여부 확인
     private boolean isCacheExpired() {
         return lastUpdated == null || 
                lastUpdated.isBefore(LocalDateTime.now().minus(CACHE_DURATION));
