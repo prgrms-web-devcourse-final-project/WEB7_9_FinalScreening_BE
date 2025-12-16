@@ -23,15 +23,20 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // soft delete를 쓴다면 추가
-    @Column
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
     public void deactivate() {
         this.isActive = false;
         this.deletedAt = LocalDateTime.now();
+    }
+
+    /** soft delete 복구(재활성화) */
+    public void activate() {
+        this.isActive = true;
+        this.deletedAt = null;
     }
 }
