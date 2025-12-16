@@ -7,7 +7,6 @@ import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class UserSignUpService {
 
     private final UserRepository userRepository;
-    private final EmailVerificationService emailVerificationService;
+    private final EmailService emailService;
 
     public void signUp(UserSignUpRequest request) {
 
@@ -25,29 +24,39 @@ public class UserSignUpService {
             throw new CustomException(CustomErrorCode.DUPLICATE_EMAIL);
         }
 
-        //이메일 인증번호 검증
-        if (!emailVerificationService.verifyCode(
-                request.email(),
-                request.verification_code()
-        )) {
-            throw new CustomException(CustomErrorCode.INVALID_VERIFICATION_CODE);
+        //이메일 인증 여부 확인
+        if (!emailService.isVerified(request.email())) {
+            throw new CustomException(CustomErrorCode.EMAIL_NOT_VERIFIED);
         }
 
-        //비밀번호 / 비밀번호 확인
+        //비밀번호 확인
         if (!request.password().equals(request.passwordConfirm())) {
             throw new CustomException(CustomErrorCode.WRONG_PASSWORD);
         }
 
-        //비밀번호 암호화
-        String encodedPassword = request.password();
+        //닉네임 자동 생성
+        String nickname = generateNickname(request.email());
 
         //User 생성
         User user = User.createUser(
                 request.email(),
-                encodedPassword
+                request.password(),
+                nickname
         );
 
         //저장
         userRepository.save(user);
+    }
+    //@앞 부분을 닉네임으로 저장
+    private String generateNickname(String email) {
+        String base = email.split("@")[0];
+        String nickname = base;
+        int idx = 1;//중복시 붙일 숫자
+
+        while (userRepository.existsByNickname(nickname)) {
+            nickname = base + "_" + idx++;
+        }
+
+        return nickname;
     }
 }

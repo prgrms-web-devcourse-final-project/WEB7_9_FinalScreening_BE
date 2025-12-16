@@ -21,15 +21,6 @@ public record UserSignUpRequest(
         @Schema(description = "비밀번호 확인", example = "password123")
         String passwordConfirm,
 
-        //비속어는 Service에서 제한 예정
-        @NotBlank
-        @Schema(description = "닉네임", example = "nick")
-        @Pattern(
-                regexp = "^[가-힣a-zA-Z0-9]{2,8}$",
-                message = "닉네임은 2~8자의 한글, 영문, 숫자만 사용할 수 있으며 공백과 특수문자및 비속어는 사용할 수 없습니다."
-        )
-        String nickname,
-
         @NotBlank
         @Schema(description = "인증번호", example = "asd123")
         String verification_code
