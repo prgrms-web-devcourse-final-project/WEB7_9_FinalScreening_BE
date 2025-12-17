@@ -28,3 +28,13 @@ custom:
     domain: "${custom.prod.domain}"
     backUrl: "${custom.prod.backUrl}"
     frontUrl: "${custom.prod.frontUrl}"
+
+  jwt:
+    secretPattern: ${JWT_SECRET}
+    accessExpireSeconds: 1800
+    refreshExpireSeconds: 1209600
+
+  cookie:
+    secure: true
+    sameSite: Lax
+    path: /

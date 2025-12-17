@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.party.entity;
 
+import com.back.matchduo.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "party")
-public class Party {
+public class Party extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,8 +29,6 @@ public class Party {
     @Column(nullable = false)
     private PartyStatus status;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 
     // 자동 파티완료 된 경우
     @Column(name = "expires_at", nullable = false)
@@ -44,8 +43,8 @@ public class Party {
         this.postId = postId;
         this.leaderId = leaderId;
         this.status = PartyStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.expiresAt = this.createdAt.plusHours(6);
+        LocalDateTime now = LocalDateTime.now();
+        this.expiresAt = now.plusHours(6);
         }
 
 

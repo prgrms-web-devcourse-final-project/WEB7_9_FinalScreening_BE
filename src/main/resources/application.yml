@@ -19,6 +19,17 @@ spring:
         use_sql_comments: true
         default_batch_fetch_size: 100
     defer-datasource-initialization: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 springdoc:
   default-produces-media-type: application/json
@@ -32,5 +43,15 @@ logging:
 
 custom:
   jwt:
-    expireSeconds: "#{30 * 60}"
     secretPattern: ${JWT_SECRET}
+    accessExpireSeconds: 1800
+    refreshExpireSeconds: 1209600
+  cookie:
+    secure: false
+    sameSite: Lax
+    path: /
+
+riot:
+  api:
+    base-url: ${RIOT_API_BASE_URL:https://asia.api.riotgames.com}
+    key: ${RIOT_API_KEY:}
