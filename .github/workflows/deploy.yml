@@ -6,9 +6,9 @@ on:
   push:
     paths:
       - ".github/workflows/**"
-      - "backend/src/**"
-      - "backend/build.gradle.kts"
-      - "backend/Dockerfile"
+      - "src/**"
+      - "build.gradle.kts"
+      - "Dockerfile"
     branches:
       - main
       - feat/#4/review-api
