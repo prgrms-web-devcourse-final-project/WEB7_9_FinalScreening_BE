@@ -1,18 +1,24 @@
 package com.back.matchduo.domain.party.controller;
 
+import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
 import com.back.matchduo.domain.party.dto.response.PartyByPostResponse;
+import com.back.matchduo.domain.party.dto.response.PartyMemberAddResponse;
+import com.back.matchduo.domain.party.dto.response.PartyMemberListResponse;
+import com.back.matchduo.domain.party.dto.response.PartyMemberRemoveResponse;
 import com.back.matchduo.domain.party.service.PartyService;
+import com.back.matchduo.global.dto.ApiResponse;
+import com.back.matchduo.global.exeption.CustomErrorCode;
+import com.back.matchduo.global.exeption.CustomException;
 import com.back.matchduo.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -38,5 +44,47 @@ public class PartyController {
 
         PartyByPostResponse response = partyService.getPartyByPostId(postId, currentUserId);
         return ResponseEntity.ok(response);
+    }
+
+
+    // 2. 파티원 초대
+    @PostMapping("/parties/{partyId}/members")
+    public ResponseEntity<List<PartyMemberAddResponse>> addPartyMember(
+            @PathVariable Long partyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid PartyMemberAddRequest request
+    ) {
+        Long currentUserId = userDetails.getId();
+
+        List<PartyMemberAddResponse> response = partyService.addMembers(partyId, currentUserId, request);
+        return ResponseEntity.ok(response);
+    }
+
+
+    // 3. 파티원 제외 (강퇴)
+    @DeleteMapping("/parties/{partyId}/members/{memberId}")
+    public ResponseEntity<ApiResponse<PartyMemberRemoveResponse>> removePartyMember(
+            @PathVariable Long partyId,
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
+        }
+
+        Long currentUserId = userDetails.getId();
+
+        PartyMemberRemoveResponse response = partyService.removeMember(partyId, memberId, currentUserId);
+
+        return ResponseEntity.ok(ApiResponse.ok("파티원이 제외되었습니다.", response));    }
+
+    // 4. 파티원 목록 조회
+    // GET /api/v1/parties/{partyId}/members
+    @GetMapping("/parties/{partyId}/members")
+    public ResponseEntity<ApiResponse<PartyMemberListResponse>> getPartyMemberList(
+            @PathVariable Long partyId
+    ) {
+        PartyMemberListResponse response = partyService.getPartyMemberList(partyId);
+        return ResponseEntity.ok(ApiResponse.ok("파티원 목록을 조회했습니다.", response));
     }
 }

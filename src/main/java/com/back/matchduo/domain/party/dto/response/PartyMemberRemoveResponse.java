@@ -12,7 +12,7 @@ public record PartyMemberRemoveResponse(
     public static PartyMemberRemoveResponse from(PartyMember member) {
         return new PartyMemberRemoveResponse(
                 member.getId(),
-                member.getUserId(),
+                member.getUser().getId(),
                 member.getState().name(),
                 member.getLeftAt()
         );
