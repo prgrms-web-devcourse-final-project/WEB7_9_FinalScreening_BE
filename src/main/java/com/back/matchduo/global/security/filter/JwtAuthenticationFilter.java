@@ -71,4 +71,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+
+        return
+                // 회원가입
+                (uri.equals("/api/v1/users/signup") && method.equals("POST")) ||
+
+                        // 로그인
+                        (uri.equals("/api/v1/auth/login") && method.equals("POST")) ||
+
+                        // 이메일 인증 관련
+                        uri.startsWith("/api/v1/users/email") ||
+
+                        // 토큰 재발급
+                        (uri.equals("/api/v1/auth/refresh") && method.equals("POST"));
+    }
 }
