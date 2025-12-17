@@ -1,4 +1,10 @@
 spring:
+  data:
+    redis:
+      host: redis_1
+      port: ${REDIS_PORT}
+      password: "${REDIS_PW}"
+
   datasource:
     url: jdbc:mysql://mysql_1:3306/${DB_NAME}
     username: ${EC2_DB_USER}
