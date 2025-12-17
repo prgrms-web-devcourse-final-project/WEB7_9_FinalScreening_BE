@@ -1,16 +1,13 @@
 package com.back.matchduo.domain.party.service;
 
 import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
-import com.back.matchduo.domain.party.dto.response.PartyByPostResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberAddResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberListResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberRemoveResponse;
+import com.back.matchduo.domain.party.dto.response.*;
 import com.back.matchduo.domain.party.entity.*;
 import com.back.matchduo.domain.party.repository.PartyMemberRepository;
 import com.back.matchduo.domain.party.repository.PartyRepository;
-import com.back.matchduo.domain.post.entity.Post; // Post 엔티티 임포트
+import com.back.matchduo.domain.post.entity.Post;
 import com.back.matchduo.domain.post.repository.PostRepository;
-import com.back.matchduo.domain.user.entity.User; // User 엔티티 임포트
+import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;
 import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
@@ -20,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +37,6 @@ public class PartyService {
                 .orElseThrow(() -> new CustomException(CustomErrorCode.PARTY_NOT_FOUND));
 
         // 2. 파티에 속한 모든 멤버 조회
-        // (단순 findByPartyId는 N+1 위험이 있으나, 여기선 User 정보가 필요하다면 추후 fetch join으로 변경 권장)
         List<PartyMember> allMembers = partyMemberRepository.findByPartyId(party.getId());
 
         // 3. 현재 유저의 참여 여부 확인
@@ -46,7 +44,6 @@ public class PartyService {
 
         if (currentUserId != null) {
             for (PartyMember member : allMembers) {
-                // [수정] userId -> user.getId()
                 if (member.getUser().getId().equals(currentUserId) && member.getState() == PartyMemberState.JOINED) {
                     isJoined = true;
                     break;
@@ -70,7 +67,7 @@ public class PartyService {
 
             PartyByPostResponse.PartyMemberDto dto = PartyByPostResponse.PartyMemberDto.of(
                     member.getId(),
-                    user.getId(), // [수정] userId -> user.getId()
+                    user.getId(),
                     nickname,
                     profileImage,
                     member.getRole()
@@ -79,7 +76,6 @@ public class PartyService {
         }
 
         // 5. 모집글 정보 조회 (Max Count)
-        // [수정] PostRepository 사용
         Post post = postRepository.findById(party.getPostId())
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND)); // POST_NOT_FOUND 에러코드 필요
 
@@ -131,11 +127,11 @@ public class PartyService {
                 existingMember.rejoinParty();
                 responses.add(createAddResponse(existingMember));
             } else {
-                // [수정] 신규 가입 시 User 엔티티 조회 필요
+                // 신규 가입 시 User 엔티티 조회 필요
                 User targetUser = userRepository.findById(targetUserId)
                         .orElseThrow(() -> new CustomException(CustomErrorCode.NOT_FOUND_USER));
 
-                // [수정] 생성자에 User 객체 전달
+                // 생성자에 User 객체 전달
                 PartyMember newMember = new PartyMember(party, targetUser, PartyMemberRole.MEMBER);
                 partyMemberRepository.save(newMember);
                 responses.add(createAddResponse(newMember));
@@ -147,15 +143,12 @@ public class PartyService {
 
     // DTO 변환 편의 메서드
     private PartyMemberAddResponse createAddResponse(PartyMember member) {
-        // [수정] User 객체에서 정보 추출
+        // User 객체에서 정보 추출
         User user = member.getUser();
         String nickname = user.getNickname();
         String profileImage = "https://dummy.img/" + user.getId(); // 임시
 
-        // [수정] DTO 팩토리 메서드 호출 (User ID 전달)
-        // PartyMemberAddResponse.of 메서드가 (member, nickname, profileImage)를 받는데,
-        // 내부에서 member.getUserId()를 호출한다면 member.getUser().getId()로 바꿔야 할 수도 있음.
-        // 현재는 member 객체를 넘기므로 DTO 내부 로직 확인 필요.
+        //  DTO 팩토리 메서드 호출 (User ID 전달)
         return PartyMemberAddResponse.of(member, nickname, profileImage);
     }
 
@@ -182,7 +175,6 @@ public class PartyService {
         }
 
         // 5. [검증] 파티장이 자기 자신을 강퇴하려는 경우 방지
-        // [수정] userId -> user.getId()
         if (member.getUser().getId().equals(party.getLeaderId())) {
             throw new CustomException(CustomErrorCode.CANNOT_KICK_LEADER);
         }
@@ -195,9 +187,7 @@ public class PartyService {
     }
 
 
-    /**
-     * 4. 파티원 목록 조회 (로그인 불필요)
-     */
+     // 파티원 목록 조회 (로그인 불필요)
     @Transactional(readOnly = true)
     public PartyMemberListResponse getPartyMemberList(Long partyId) {
         // 1. 파티 정보 조회
@@ -214,13 +204,12 @@ public class PartyService {
         // 4. DTO 변환
         List<PartyMemberListResponse.PartyMemberDto> memberDtos = members.stream()
                 .map(member -> {
-                    // [수정] User 정보 추출
                     User user = member.getUser();
                     String profileImage = "https://opgg-static.akamaized.net/meta/images/profile_icons/profileIcon" + user.getId() + ".jpg";
 
                     return PartyMemberListResponse.PartyMemberDto.of(
                             member.getId(),
-                            user.getId(), // [수정] userId -> user.getId()
+                            user.getId(),
                             member.getRole(),
                             member.getJoinedAt(),
                             user.getNickname(),
@@ -232,9 +221,56 @@ public class PartyService {
         // 5. 응답 반환
         return new PartyMemberListResponse(
                 party.getId(),
-                members.size(), // currentCount
-                post.getRecruitCount(), // [수정] Post 엔티티에서 maxCount 가져옴
+                members.size(),
+                post.getRecruitCount(),
                 memberDtos
         );
+    }
+
+
+
+    // 내가 참여한 파티 목록 조회
+    @Transactional(readOnly = true)
+    public MyPartyListResponse getMyPartyList(Long currentUserId) {
+        // 1. 내가 참여한 파티 멤버십 조회 (Party 정보 포함)
+        List<PartyMember> myMemberships = partyMemberRepository.findAllByUserIdWithParty(currentUserId);
+
+        if (myMemberships.isEmpty()) {
+            return new MyPartyListResponse(List.of());
+        }
+
+        // 2. 게시글(Post) ID 목록 추출
+        List<Long> postIds = myMemberships.stream()
+                .map(pm -> pm.getParty().getPostId())
+                .toList();
+
+        // 3. 게시글 정보 일괄 조회 (GameMode 포함) -> Map으로 변환 (조회 성능 최적화)
+        Map<Long, Post> postMap = postRepository.findAllByIdInWithGameMode(postIds).stream()
+                .collect(Collectors.toMap(Post::getId, post -> post));
+
+        // 4. DTO 변환
+        List<MyPartyListResponse.MyPartyDto> partyDtos = myMemberships.stream()
+                .map(pm -> {
+                    Party party = pm.getParty();
+                    Post post = postMap.get(party.getPostId());
+
+                    // Post가 삭제되었을 경우에 대한 안전장치 (Optional)
+                    String postTitle = (post != null) ? post.getMemo() : "삭제된 게시글입니다.";
+
+                    String gameModeName = (post != null) ? post.getGameMode().getName() : "Unknown";
+
+                    return MyPartyListResponse.MyPartyDto.of(
+                            party.getId(),
+                            party.getPostId(),
+                            postTitle,
+                            gameModeName,
+                            party.getStatus(),
+                            pm.getRole(),
+                            pm.getJoinedAt()
+                    );
+                })
+                .toList();
+
+        return new MyPartyListResponse(partyDtos);
     }
 }

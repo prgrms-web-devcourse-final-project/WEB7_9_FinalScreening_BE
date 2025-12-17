@@ -1,10 +1,7 @@
 package com.back.matchduo.domain.party.controller;
 
 import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
-import com.back.matchduo.domain.party.dto.response.PartyByPostResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberAddResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberListResponse;
-import com.back.matchduo.domain.party.dto.response.PartyMemberRemoveResponse;
+import com.back.matchduo.domain.party.dto.response.*;
 import com.back.matchduo.domain.party.service.PartyService;
 import com.back.matchduo.global.dto.ApiResponse;
 import com.back.matchduo.global.exeption.CustomErrorCode;
@@ -79,12 +76,26 @@ public class PartyController {
         return ResponseEntity.ok(ApiResponse.ok("파티원이 제외되었습니다.", response));    }
 
     // 4. 파티원 목록 조회
-    // GET /api/v1/parties/{partyId}/members
     @GetMapping("/parties/{partyId}/members")
     public ResponseEntity<ApiResponse<PartyMemberListResponse>> getPartyMemberList(
             @PathVariable Long partyId
     ) {
         PartyMemberListResponse response = partyService.getPartyMemberList(partyId);
         return ResponseEntity.ok(ApiResponse.ok("파티원 목록을 조회했습니다.", response));
+    }
+
+
+    // 5. 내가 참여한 파티 목록 조회
+    @GetMapping("users/me/parties")
+    public ResponseEntity<ApiResponse<MyPartyListResponse>> getMyPartyList(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
+        }
+
+        MyPartyListResponse response = partyService.getMyPartyList(userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.ok("참여한 파티 목록을 조회했습니다.", response));
     }
 }
