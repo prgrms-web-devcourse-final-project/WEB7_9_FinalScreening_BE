@@ -116,5 +116,5 @@ jobs:
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker stop app1 2>/dev/null || true && \
             docker rm app1 2>/dev/null || true && \
-            docker run -d --name app1 --network common -p 8080:8080 ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker run -d --name app1 --network common -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker image prune -f
