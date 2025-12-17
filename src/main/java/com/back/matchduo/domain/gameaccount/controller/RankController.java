@@ -2,6 +2,7 @@ package com.back.matchduo.domain.gameaccount.controller;
 
 import com.back.matchduo.domain.gameaccount.dto.response.RankResponse;
 import com.back.matchduo.domain.gameaccount.service.RankService;
+import com.back.matchduo.global.security.AuthPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,8 @@ public class RankController {
     @PostMapping("/{gameAccountId}/ranks/refresh")
     public ResponseEntity<List<RankResponse>> refreshRankData(
             @PathVariable Long gameAccountId) {
-        List<RankResponse> responses = rankService.refreshRankData(gameAccountId);
+        Long userId = AuthPrincipal.getUserId();
+        List<RankResponse> responses = rankService.refreshRankData(gameAccountId, userId);
         return ResponseEntity.ok(responses);
     }
 
@@ -35,7 +37,8 @@ public class RankController {
     @GetMapping("/{gameAccountId}/ranks")
     public ResponseEntity<List<RankResponse>> getRanksByGameAccountId(
             @PathVariable Long gameAccountId) {
-        List<RankResponse> responses = rankService.getRanksByGameAccountId(gameAccountId);
+        Long userId = AuthPrincipal.getUserId();
+        List<RankResponse> responses = rankService.getRanksByGameAccountId(gameAccountId, userId);
         return ResponseEntity.ok(responses);
     }
 }

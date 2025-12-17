@@ -14,15 +14,23 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableConfigurationProperties({JwtProperties.class, CookieProperties.class})
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtProvider jwtProvider,
+            CorsConfigurationSource corsConfigurationSource
+    ) throws Exception {
 
         http
+                // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
                 // CSRF 사용 안 함 (JWT + Cookie 기반)
                 .csrf(csrf -> csrf.disable())
 

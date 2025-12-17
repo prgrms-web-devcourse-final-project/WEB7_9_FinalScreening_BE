@@ -36,16 +36,17 @@ public class GameAccountService {
     /**
      * 게임 계정 생성 (닉네임과 태그 저장)
      * 한 게임에 한 가지 계정만 등록 가능
-     * @param request 게임 타입, 닉네임, 태그, 유저 ID를 포함한 요청 DTO
+     * @param request 게임 타입, 닉네임, 태그를 포함한 요청 DTO
+     * @param userId 인증된 사용자 ID
      * @return 생성된 게임 계정 정보
      */
-    public GameAccountResponse createGameAccount(GameAccountCreateRequest request) {
-        // 임시: User 조회
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. userId: " + request.getUserId()));
+    public GameAccountResponse createGameAccount(GameAccountCreateRequest request, Long userId) {
+        // User 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. userId: " + userId));
 
         // 중복 체크: 같은 유저가 같은 게임 타입의 계정을 이미 가지고 있는지 확인
-        gameAccountRepository.findByUser_IdAndGameType(request.getUserId(), request.getGameType())
+        gameAccountRepository.findByUser_IdAndGameType(userId, request.getGameType())
                 .ifPresent(existingAccount -> {
                     throw new IllegalArgumentException(
                         String.format("이미 %s 게임 계정이 등록되어 있습니다. (기존 계정 ID: %d)", 
@@ -161,11 +162,17 @@ public class GameAccountService {
      * 게임 계정 수정 (닉네임, 태그, puuid 업데이트)
      * @param gameAccountId 게임 계정 ID
      * @param request 수정할 닉네임과 태그
+     * @param userId 인증된 사용자 ID
      * @return 수정된 게임 계정 정보
      */
-    public GameAccountResponse updateGameAccount(Long gameAccountId, GameAccountUpdateRequest request) {
+    public GameAccountResponse updateGameAccount(Long gameAccountId, GameAccountUpdateRequest request, Long userId) {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
+
+        // 소유자 검증
+        if (!gameAccount.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("본인의 게임 계정만 수정할 수 있습니다. gameAccountId: " + gameAccountId);
+        }
 
         // Riot API 호출하여 새로운 puuid 가져오기
         String puuid = null;
@@ -214,10 +221,16 @@ public class GameAccountService {
      * 게임 계정 삭제 (연동 해제)
      * 게임 계정 삭제 시 관련된 랭크 정보도 함께 삭제됩니다.
      * @param gameAccountId 게임 계정 ID
+     * @param userId 인증된 사용자 ID
      */
-    public void deleteGameAccount(Long gameAccountId) {
+    public void deleteGameAccount(Long gameAccountId, Long userId) {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
+
+        // 소유자 검증
+        if (!gameAccount.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("본인의 게임 계정만 삭제할 수 있습니다. gameAccountId: " + gameAccountId);
+        }
 
         // 관련된 랭크 정보 먼저 삭제
         rankRepository.findByGameAccount_GameAccountId(gameAccountId).forEach(rank -> {
