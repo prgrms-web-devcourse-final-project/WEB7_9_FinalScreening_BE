@@ -1,17 +1,26 @@
 package com.back.matchduo.domain.post.dto.response;
 
-import com.back.matchduo.domain.user.entity.User;
-
 public record PostWriter(
         Long userId,
-        String nickname,
-        String profileImageUrl
+        String communityNickname,
+        String communityProfileImageUrl,
+        WriterGameAccount gameAccount,
+        WriterGameSummary gameSummary
 ) {
-    public static PostWriter from(User user) {
-        return new PostWriter(
-                user.getId(),
-                user.getNickname(),
-                user.getProfileImage()
-        );
+    public record WriterGameAccount(
+            String gameType,
+            String gameNickname,
+            String gameTag,
+            String profileIconUrl
+    ) {
+    }
+
+    public record WriterGameSummary(
+            String tier,
+            String division,
+            Double winRate,              // placeholder
+            Double kda,                  // placeholder
+            java.util.List<String> favoriteChampions // placeholder
+    ) {
     }
 }

@@ -1,0 +1,367 @@
+package com.back.matchduo.domain.post.service;
+
+import com.back.matchduo.domain.party.entity.Party;
+import com.back.matchduo.domain.party.entity.PartyMember;
+import com.back.matchduo.domain.party.entity.PartyMemberRole;
+import com.back.matchduo.domain.gameaccount.entity.GameAccount;
+import com.back.matchduo.domain.gameaccount.entity.Rank;
+import com.back.matchduo.domain.post.dto.request.PostCreateRequest;
+import com.back.matchduo.domain.post.dto.request.PostUpdateRequest;
+import com.back.matchduo.domain.post.dto.response.*;
+import com.back.matchduo.domain.post.entity.*;
+import com.back.matchduo.domain.post.repository.GameModeRepository;
+import com.back.matchduo.domain.post.repository.PostGameAccountQueryRepository;
+import com.back.matchduo.domain.post.repository.PostListQueryRepository;
+import com.back.matchduo.domain.post.repository.PostPartyQueryRepository;
+import com.back.matchduo.domain.post.repository.PostRepository;
+import com.back.matchduo.domain.user.entity.User;
+import com.back.matchduo.domain.user.repository.UserRepository;
+import com.back.matchduo.global.exeption.CustomErrorCode;
+import com.back.matchduo.global.exeption.CustomException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class PostListFacade {
+
+    private final PostRepository postRepository;
+    private final GameModeRepository gameModeRepository;
+    private final UserRepository userRepository;
+    private final EntityManager entityManager;
+    private final ObjectMapper objectMapper;
+
+    private final PostValidator postValidator;
+    private final PostListQueryRepository postListQueryRepository;
+    private final PostPartyQueryRepository postPartyQueryRepository;
+    private final PostGameAccountQueryRepository postGameAccountQueryRepository;
+    private final PostGameProfileIconUrlBuilder iconUrlBuilder;
+
+    // 모집글 생성 + 생성 직후 화면에 필요한 최소 파티 표시(작성자만)
+    @Transactional
+    public PostCreateResponse createPostWithPartyView(PostCreateRequest request, Long userId) {
+        // 1) 생성 규칙 검증
+        postValidator.validateCreate(request);
+
+        // 2) 게임모드
+        GameMode gameMode = gameModeRepository.findById(request.gameModeId())
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_MODE_NOT_FOUND));
+
+        // 3) lookingPositions 직렬화
+        String lookingPositionsJson = serializePositions(request.lookingPositions());
+
+        // 4) User 연결
+        User writerRef = getUserReference(userId);
+
+        // 5) Post 저장
+        Post post = Post.builder()
+                .user(writerRef)
+                .gameMode(gameMode)
+                .queueType(request.queueType())
+                .myPosition(request.myPosition())
+                .lookingPositions(lookingPositionsJson)
+                .mic(request.mic())
+                .recruitCount(request.recruitCount())
+                .memo(request.memo())
+                .build();
+
+        Post saved = postRepository.save(post);
+
+        // 6) 생성 직후 participants는 최소 작성자 1명으로 표시 (파티 생성은 팀원 로직이 후행)
+        List<Position> lookingPositions = request.lookingPositions();
+
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.POST_FORBIDDEN));
+
+        PostWriter writerDto = buildWriterDto(writer, null, null);
+
+        // role은 응답 명세서 기준 "LEADER"/"MEMBER" 문자열로 내려줌
+        List<PostParticipant> participants = List.of(
+                new PostParticipant(
+                        writer.getId(),
+                        writer.getNickname(),
+                        writer.getProfile_Image(),
+                        PartyMemberRole.LEADER.name()
+                )
+        );
+
+        return PostCreateResponse.of(saved, lookingPositions, 1, writerDto, participants);
+    }
+
+    // 모집글 수정 + 화면용 응답 조립
+    @Transactional
+    public PostUpdateResponse updatePostWithPartyView(Post post, PostUpdateRequest request) {
+        // 1) 합성 검증 포함
+        postValidator.validateUpdateMerged(post, request);
+
+        // 2) lookingPositions 변경이 들어오면 JSON으로 직렬화
+        String lookingPositionsJson = (request.lookingPositions() != null)
+                ? serializePositions(request.lookingPositions())
+                : null;
+
+        post.update(
+                request.myPosition(),
+                lookingPositionsJson,
+                request.queueType(),
+                request.mic(),
+                request.recruitCount(),
+                request.memo()
+        );
+
+        // 3) 응답 조립(파티/계정은 목록 로직과 동일하게 IN 조회까지는 과함 → 단건 조회로 조립)
+        // 단건은 N+1 이슈가 아니므로 단순 조회로 구성
+        User writer = post.getUser(); // 트랜잭션 내
+        PostWriter writerDto = buildWriterDto(writer, null, null);
+
+        List<Position> lookingPositions = parsePositions(post.getLookingPositions());
+
+        // 파티가 이미 생성돼 있으면 붙이고, 없으면 작성자만
+        Integer currentParticipants = 1;
+
+        // role은 응답 명세서 기준 "LEADER"/"MEMBER" 문자열로 내려줌
+        List<PostParticipant> participants = List.of(
+                new PostParticipant(
+                        writer.getId(),
+                        writer.getNickname(),
+                        writer.getProfile_Image(),
+                        PartyMemberRole.LEADER.name()
+                )
+        );
+
+        return PostUpdateResponse.of(post, lookingPositions, currentParticipants, writerDto, participants);
+    }
+
+    // 목록 조회: 필터 + N+1 방지 + 응답 조립
+    @Transactional(readOnly = true)
+    public PostListResponse getPostList(
+            Long cursor,
+            Integer size,
+            PostStatus status,
+            QueueType queueType,
+            Long gameModeId,
+            String myPositionsCsv,
+            String tier,
+            Long currentUserId
+    ) {
+        int pageSize = (size == null || size <= 0) ? 20 : Math.min(size, 50);
+
+        // myPositions 파싱 (ANY 포함되면 필터 미적용)
+        List<Position> myPositions = postListQueryRepository.parseMyPositionsCsv(myPositionsCsv);
+
+        // tier는 대문자 기준 저장일 가능성이 높아 normalize
+        String normalizedTier = (tier == null || tier.isBlank()) ? null : tier.trim().toUpperCase();
+
+        // 1) Post 목록 1번 조회 (size + 1)
+        List<Post> posts = postListQueryRepository.findPosts(
+                cursor,
+                pageSize + 1,
+                status,
+                queueType,
+                gameModeId,
+                myPositions.isEmpty() ? null : myPositions,
+                normalizedTier
+        );
+
+        boolean hasNext = posts.size() > pageSize;
+        if (hasNext) {
+            posts.remove(posts.size() - 1);
+        }
+
+        Long nextCursor = hasNext && !posts.isEmpty()
+                ? posts.get(posts.size() - 1).getId()
+                : null;
+
+        if (posts.isEmpty()) {
+            return new PostListResponse(List.of(), nextCursor, hasNext);
+        }
+
+        // 2) writer userIds 수집
+        List<Long> writerIds = posts.stream()
+                .map(p -> p.getUser().getId())
+                .distinct()
+                .toList();
+
+        // 3) GameAccount 일괄 조회 (LOL 계정만)
+        List<GameAccount> accounts = postGameAccountQueryRepository.findLolAccountsByUserIds(writerIds);
+        Map<Long, GameAccount> accountByUserId = accounts.stream()
+                .collect(Collectors.toMap(ga -> ga.getUser().getId(), Function.identity(), (a, b) -> a));
+
+        // 4) Rank 일괄 조회 (gameAccountId IN)
+        List<Long> gameAccountIds = accounts.stream()
+                .map(GameAccount::getGameAccountId)
+                .distinct()
+                .toList();
+
+        List<Rank> ranks = postGameAccountQueryRepository.findRanksByGameAccountIds(gameAccountIds);
+
+        // 큐타입별 Rank 매칭용 map: gameAccountId -> (queueTypeKey -> Rank)
+        Map<Long, Map<String, Rank>> rankMap = new HashMap<>();
+        for (Rank r : ranks) {
+            Long gaId = r.getGameAccount().getGameAccountId();
+            rankMap.computeIfAbsent(gaId, k -> new HashMap<>())
+                    .put(r.getQueueType(), r);
+        }
+
+        // 5) Party 일괄 조회 (postIds IN)
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        List<Party> parties = postPartyQueryRepository.findPartiesByPostIds(postIds);
+        Map<Long, Party> partyByPostId = parties.stream()
+                .collect(Collectors.toMap(Party::getPostId, Function.identity(), (a, b) -> a));
+
+        // 6) PartyMember 일괄 조회 (partyIds IN + JOINED + join fetch user)
+        List<Long> partyIds = parties.stream().map(Party::getId).toList();
+        List<PartyMember> joinedMembers = postPartyQueryRepository.findJoinedMembersByPartyIds(partyIds);
+
+        // partyId -> members
+        Map<Long, List<PartyMember>> membersByPartyId = joinedMembers.stream()
+                .collect(Collectors.groupingBy(pm -> pm.getParty().getId()));
+
+        // 7) PostDto 조립
+        List<PostListResponse.PostDto> dtoList = new ArrayList<>();
+
+        for (Post p : posts) {
+            User writer = p.getUser();
+            GameAccount ga = accountByUserId.get(writer.getId());
+
+            // writer gameAccount dto
+            PostWriter.WriterGameAccount writerGameAccount = null;
+            PostWriter.WriterGameSummary writerGameSummary = null;
+
+            if (ga != null) {
+                String profileIconUrl = iconUrlBuilder.buildProfileIconUrl(ga.getProfileIconId());
+                writerGameAccount = new PostWriter.WriterGameAccount(
+                        ga.getGameType(),
+                        ga.getGameNickname(),
+                        ga.getGameTag(),
+                        profileIconUrl
+                );
+
+                // 정책: gameMode/queueType 상관없이 "솔로랭크(RANKED_SOLO_5x5)" 기준 티어만 사용
+                Rank matched = findSoloRank(ga.getGameAccountId(), rankMap);
+
+                if (matched != null) {
+                    writerGameSummary = new PostWriter.WriterGameSummary(
+                            matched.getTier(),
+                            matched.getRank(),
+                            null, // winRate placeholder
+                            null, // kda placeholder
+                            null  // favoriteChampions placeholder
+                    );
+                } else {
+                    writerGameSummary = new PostWriter.WriterGameSummary(
+                            null, null, null, null, null
+                    );
+                }
+            }
+
+            PostWriter writerDto = new PostWriter(
+                    writer.getId(),
+                    writer.getNickname(),
+                    writer.getProfile_Image(),
+                    writerGameAccount,
+                    writerGameSummary
+            );
+
+            // party/participants
+            Party party = partyByPostId.get(p.getId());
+            List<PostParticipant> participants = new ArrayList<>();
+            int currentParticipants = 1;
+
+            if (party != null) {
+                List<PartyMember> partyMembers = membersByPartyId.getOrDefault(party.getId(), List.of());
+                currentParticipants = partyMembers.size();
+
+                for (PartyMember pm : partyMembers) {
+                    User u = pm.getUser();
+                    participants.add(new PostParticipant(
+                            u.getId(),
+                            u.getNickname(),
+                            u.getProfile_Image(),
+                            pm.getRole().name()
+                    ));
+                }
+            } else {
+                // 파티가 아직 없으면 작성자만 표시
+                currentParticipants = 1;
+                participants.add(new PostParticipant(
+                        writer.getId(),
+                        writer.getNickname(),
+                        writer.getProfile_Image(),
+                        PartyMemberRole.LEADER.name()
+                ));
+            }
+
+            dtoList.add(new PostListResponse.PostDto(
+                    p.getId(),
+                    p.getGameMode().getId(),
+                    p.getGameMode().getModeCode(),
+                    p.getQueueType(),
+                    p.getMyPosition(),
+                    parsePositions(p.getLookingPositions()),
+                    p.getMic(),
+                    p.getRecruitCount(),
+                    currentParticipants,
+                    p.getStatus(),
+                    p.getMemo(),
+                    p.getCreatedAt(),
+                    writerDto,
+                    participants
+            ));
+        }
+
+        return new PostListResponse(dtoList, nextCursor, hasNext);
+    }
+
+    private Rank findSoloRank(Long gameAccountId, Map<Long, Map<String, Rank>> rankMap) {
+        Map<String, Rank> m = rankMap.get(gameAccountId);
+        if (m == null) return null;
+
+        // 정책: 무조건 솔로랭크만 사용
+        return m.get("RANKED_SOLO_5x5");
+    }
+
+    private String serializePositions(List<Position> positions) {
+        try {
+            return objectMapper.writeValueAsString(positions);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(CustomErrorCode.POSITION_SERIALIZE_FAILED);
+        }
+    }
+
+    private List<Position> parsePositions(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<Position>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private User getUserReference(Long userId) {
+        if (userId == null) {
+            throw new CustomException(CustomErrorCode.POST_FORBIDDEN);
+        }
+        if (!userRepository.existsById(userId)) {
+            throw new CustomException(CustomErrorCode.POST_FORBIDDEN);
+        }
+        return entityManager.getReference(User.class, userId);
+    }
+
+    private PostWriter buildWriterDto(User writer, PostWriter.WriterGameAccount gameAccount, PostWriter.WriterGameSummary gameSummary) {
+        return new PostWriter(
+                writer.getId(),
+                writer.getNickname(),
+                writer.getProfile_Image(),
+                gameAccount,
+                gameSummary
+        );
+    }
+}
