@@ -19,4 +19,8 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
 
     // 4. 특정 파티에서 내 멤버 정보 찾기
     Optional<PartyMember> findByPartyIdAndUserId(Long partyId, Long userId);
+
+    long countByParty_PostId(Long postId);
+
+    List<PartyMember> findAllByParty_PostId(Long postId);
 }
