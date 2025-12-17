@@ -5,6 +5,7 @@ import com.back.matchduo.domain.gameaccount.dto.request.GameAccountUpdateRequest
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountDeleteResponse;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountResponse;
 import com.back.matchduo.domain.gameaccount.service.GameAccountService;
+import com.back.matchduo.global.security.AuthPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,24 +23,24 @@ public class GameAccountController {
 
     /**
      * 게임 계정 생성 (닉네임과 태그 저장)
-     * @param request 닉네임, 태그, 유저 ID를 포함한 요청 DTO
+     * @param request 닉네임, 태그를 포함한 요청 DTO
      * @return 생성된 게임 계정 정보
      */
     @PostMapping
     public ResponseEntity<GameAccountResponse> createGameAccount(
             @Valid @RequestBody GameAccountCreateRequest request) {
-        GameAccountResponse response = gameAccountService.createGameAccount(request);
+        Long userId = AuthPrincipal.getUserId();
+        GameAccountResponse response = gameAccountService.createGameAccount(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
      * 사용자의 모든 게임 계정 조회
-     * @param userId 유저 ID
      * @return 게임 계정 목록
      */
     @GetMapping
-    public ResponseEntity<List<GameAccountResponse>> getUserGameAccounts(
-            @RequestParam Long userId) {
+    public ResponseEntity<List<GameAccountResponse>> getUserGameAccounts() {
+        Long userId = AuthPrincipal.getUserId();
         List<GameAccountResponse> responses = gameAccountService.getUserGameAccounts(userId);
         return ResponseEntity.ok(responses);
     }
@@ -66,7 +67,8 @@ public class GameAccountController {
     public ResponseEntity<GameAccountResponse> updateGameAccount(
             @PathVariable Long gameAccountId,
             @Valid @RequestBody GameAccountUpdateRequest request) {
-        GameAccountResponse response = gameAccountService.updateGameAccount(gameAccountId, request);
+        Long userId = AuthPrincipal.getUserId();
+        GameAccountResponse response = gameAccountService.updateGameAccount(gameAccountId, request, userId);
         return ResponseEntity.ok(response);
     }
 
@@ -78,7 +80,8 @@ public class GameAccountController {
     @DeleteMapping("/{gameAccountId}")
     public ResponseEntity<GameAccountDeleteResponse> deleteGameAccount(
             @PathVariable Long gameAccountId) {
-        gameAccountService.deleteGameAccount(gameAccountId);
+        Long userId = AuthPrincipal.getUserId();
+        gameAccountService.deleteGameAccount(gameAccountId, userId);
         return ResponseEntity.ok(GameAccountDeleteResponse.builder()
                 .message("게임 계정 연동이 해제되었습니다.")
                 .gameAccountId(gameAccountId)

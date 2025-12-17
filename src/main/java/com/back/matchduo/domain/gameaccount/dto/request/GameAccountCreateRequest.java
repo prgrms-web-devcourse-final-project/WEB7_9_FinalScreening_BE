@@ -19,9 +19,5 @@ public class GameAccountCreateRequest {
     private String gameNickname;
 
     private String gameTag;
-
-    // 임시: user_id를 직접 받아서 처리 (나중에 인증 정보로 대체)
-    @NotNull(message = "유저 ID는 필수입니다.")
-    private Long userId;
 }
 
