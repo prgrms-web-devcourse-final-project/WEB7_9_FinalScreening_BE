@@ -45,9 +45,6 @@ jobs:
   buildImageAndPush:
     name: 도커 이미지 빌드와 푸시
     needs: makeTagAndRelease
-    defaults:
-      run:
-        working-directory: backend # 원하는 디렉토리
     runs-on: ubuntu-latest
     outputs:
       owner_lc: ${{ steps.export_owner.outputs.owner_lc }}
@@ -81,7 +78,7 @@ jobs:
       - name: 빌드 앤 푸시
         uses: docker/build-push-action@v3
         with:
-          context: ./backend
+          context: .
           push: true
           cache-from: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache
           cache-to: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache,mode=max
@@ -101,7 +98,7 @@ jobs:
       - name: 인스턴스 ID 가져오기
         id: get_instance_id
         run: |
-          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=dev-ec2-1" "Name=instance-state-name,Values=running" --query "Reservations[].Instances[].InstanceId" --output text)
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=matchmyduo-ec2-1" "Name=instance-state-name,Values=running" --query "Reservations[].Instances[].InstanceId" --output text)
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
           echo $INSTANCE_ID
       - name: AWS SSM Send-Command
