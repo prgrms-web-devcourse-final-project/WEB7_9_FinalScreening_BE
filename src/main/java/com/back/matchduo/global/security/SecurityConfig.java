@@ -58,6 +58,12 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout"
                         ).permitAll()
 
+                        //회원가입 & 이메일 인증 API 허용
+                        .requestMatchers(
+                                "/api/v1/users/signup",
+                                "/api/v1/users/email/**"
+                        ).permitAll()
+
                         // 모집글 조회(GET)만 공개
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/posts",
