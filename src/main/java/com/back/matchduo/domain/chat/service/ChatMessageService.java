@@ -61,7 +61,7 @@ public class ChatMessageService {
      * - room 조회/검증 + pageable 생성 + sessionNo 검증 + 메시지 조회를 한 곳에서 처리
      */
     private ChatMessagesWithRoom loadMessagesWithRoom(Long chatRoomId, Long requesterId, Long cursorMessageId, int size) {
-        ChatRoom room = getRoomOrThrow(chatRoomId);
+        ChatRoom room = getRoomWithDetailsOrThrow(chatRoomId);
         validateMember(room, requesterId);
 
         int pageSize = (size <= 0 || size > 100) ? 30 : size;
@@ -127,6 +127,15 @@ public class ChatMessageService {
             throw new CustomException(CustomErrorCode.CHAT_INVALID_CHAT_ROOM);
         }
         return chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
+    }
+
+    /** 채팅방 상세 조회 (sender, receiver, post 함께 로드) */
+    private ChatRoom getRoomWithDetailsOrThrow(Long chatRoomId) {
+        if (chatRoomId == null) {
+            throw new CustomException(CustomErrorCode.CHAT_INVALID_CHAT_ROOM);
+        }
+        return chatRoomRepository.findByIdWithDetails(chatRoomId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
     }
 

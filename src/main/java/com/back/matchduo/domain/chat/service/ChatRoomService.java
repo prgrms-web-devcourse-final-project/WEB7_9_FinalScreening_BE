@@ -174,8 +174,9 @@ public class ChatRoomService {
     }
 
     /** 채팅방 상세 조회 (상대방 게임 계정 정보 포함) */
+    @Transactional(readOnly = true)
     public ChatRoomDetailWithGameAccount getRoomWithGameAccount(Long chatRoomId, Long userId) {
-        ChatRoom room = getRoomOrThrow(chatRoomId);
+        ChatRoom room = getRoomWithDetailsOrThrow(chatRoomId);
         validateMember(room, userId);
 
         // 상대방 userId 구하기
@@ -199,6 +200,15 @@ public class ChatRoomService {
             throw new CustomException(CustomErrorCode.CHAT_INVALID_CHAT_ROOM);
         }
         return chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
+    }
+
+    /** 채팅방 상세 조회 (sender, receiver, post 함께 로드) */
+    private ChatRoom getRoomWithDetailsOrThrow(Long chatRoomId) {
+        if (chatRoomId == null) {
+            throw new CustomException(CustomErrorCode.CHAT_INVALID_CHAT_ROOM);
+        }
+        return chatRoomRepository.findByIdWithDetails(chatRoomId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
     }
 
