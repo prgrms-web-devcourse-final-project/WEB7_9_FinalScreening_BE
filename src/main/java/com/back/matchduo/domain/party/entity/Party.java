@@ -31,7 +31,7 @@ public class Party extends BaseEntity {
 
 
     // 자동 파티완료 된 경우
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
     // 수동 파티완료, 자동 파티완료 된 경우의 시간
@@ -39,20 +39,33 @@ public class Party extends BaseEntity {
     private LocalDateTime closedAt;
 
 
+    // 파티 초기 상태
     public Party(Long postId, Long leaderId) {
         this.postId = postId;
         this.leaderId = leaderId;
-        this.status = PartyStatus.ACTIVE;
-        LocalDateTime now = LocalDateTime.now();
-        this.expiresAt = now.plusHours(6);
+        this.status = PartyStatus.RECRUIT;
+        this.expiresAt = null;
         }
 
+    // 모집 완료 -> ACTIVE 전환
+    public void activateParty(LocalDateTime expiresAt) {
+        this.status = PartyStatus.ACTIVE;
+        this.expiresAt = expiresAt;
+    }
+
+    // 3. 멤버 이탈 -> RECRUIT 복귀
+    public void downgradeToRecruit() {
+        if (this.status == PartyStatus.ACTIVE) {
+            this.status = PartyStatus.RECRUIT;
+            this.expiresAt = null;
+        }
+    }
 
     // 파티장이 수동 파티완료 처리
     public void closeParty() {
-        if (this.status == PartyStatus.ACTIVE) {
+        if (this.status == PartyStatus.ACTIVE || this.status == PartyStatus.RECRUIT) {
             this.status = PartyStatus.CLOSED;
-            this.closedAt = LocalDateTime.now(); // 현재 시간 기록
+            this.closedAt = LocalDateTime.now();
         }
     }
 
@@ -60,7 +73,7 @@ public class Party extends BaseEntity {
     public void expireParty() {
         if (this.status == PartyStatus.ACTIVE) {
             this.status = PartyStatus.CLOSED;
-            this.closedAt = this.expiresAt; // 만료 예정 시간이 곧 종료 시간
+            this.closedAt = this.expiresAt;
         }
     }
 }
