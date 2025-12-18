@@ -83,10 +83,6 @@ public class SecurityConfig {
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
                                 "/ws/**"
                         ).permitAll()
 
