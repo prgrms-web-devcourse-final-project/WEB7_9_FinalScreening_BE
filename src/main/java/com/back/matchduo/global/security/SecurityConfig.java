@@ -1,5 +1,6 @@
 package com.back.matchduo.global.security;
 
+import com.back.matchduo.domain.user.repository.UserRepository;
 import com.back.matchduo.global.config.CookieProperties;
 import com.back.matchduo.global.config.JwtProperties;
 import com.back.matchduo.global.security.filter.JwtAuthenticationFilter;
@@ -24,6 +25,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtProvider jwtProvider,
+            UserRepository userRepository,
             CorsConfigurationSource corsConfigurationSource
     ) throws Exception {
 
@@ -83,6 +85,7 @@ public class SecurityConfig {
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()
                         .requestMatchers(
+                                "/api/v1/chats/**",
                                 "/ws/**"
                         ).permitAll()
 
@@ -92,7 +95,7 @@ public class SecurityConfig {
 
                 // JWT 인증 필터 등록
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider),
+                        new JwtAuthenticationFilter(jwtProvider, userRepository),
                         UsernamePasswordAuthenticationFilter.class
                 );
 
