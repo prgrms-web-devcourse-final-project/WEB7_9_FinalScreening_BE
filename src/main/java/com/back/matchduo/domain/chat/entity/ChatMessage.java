@@ -60,8 +60,8 @@ public class ChatMessage {
 
     @PrePersist
     private void prePersist() {
-        if (sessionNo == null && chatRoom != null) {
-            sessionNo = chatRoom.getCurrentSessionNo();
+        if (sessionNo == null) {
+            throw new CustomException(CustomErrorCode.CHAT_INVALID_SESSION);
         }
     }
 
