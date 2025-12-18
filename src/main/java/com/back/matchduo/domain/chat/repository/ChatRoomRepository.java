@@ -50,4 +50,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     boolean existsByIdAndMember(
             @Param("chatId") Long chatId,
             @Param("userId") Long userId);
+
+    /** 채팅방 상세 조회 (sender, receiver, post 함께 로드 - N+1 방지) */
+    @Query("SELECT r FROM ChatRoom r " +
+           "JOIN FETCH r.sender " +
+           "JOIN FETCH r.receiver " +
+           "JOIN FETCH r.post p " +
+           "WHERE r.id = :id")
+    Optional<ChatRoom> findByIdWithDetails(@Param("id") Long id);
 }
