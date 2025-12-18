@@ -28,6 +28,8 @@ public record PostCreateRequest(
         @Max(value = 5, message = "최대 5명까지 가능합니다.")
         Integer recruitCount,
 
+        @NotBlank(message = "모집 내용을 입력해주세요.") // 공백만 입력 X
+        @Size(max = 50, message = "모집 내용은 1~50자여야 합니다.")
         String memo
 ) {
 }

@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.user.dto.request;
 
+import com.back.matchduo.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,4 +26,12 @@ public record UserProfileRequest(
         @Size(max = 40, message = "자기소개는 최대 40글자까지 작성할 수 있습니다.")
         String comment
 ) {
+    public static UserProfileRequest from(User user) {
+        return new UserProfileRequest(
+                user.getEmail(),
+                user.getProfileImage(),
+                user.getNickname(),
+                user.getComment()
+        );
+    }
 }

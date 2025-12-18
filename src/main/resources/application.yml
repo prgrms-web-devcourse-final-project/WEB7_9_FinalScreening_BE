@@ -44,7 +44,7 @@ logging:
 custom:
   jwt:
     secretPattern: ${JWT_SECRET}
-    accessExpireSeconds: 1800
+    accessExpireSeconds: 1209600
     refreshExpireSeconds: 1209600
   cookie:
     secure: false

@@ -15,6 +15,14 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bjw7099@gmail.com
+    password: srzwfeatyyvnisgd
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
 custom:
   cookie:

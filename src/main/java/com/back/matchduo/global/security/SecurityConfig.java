@@ -51,11 +51,23 @@ public class SecurityConfig {
 
                 // 인가 규칙
                 .authorizeHttpRequests(auth -> auth
+                        //Swagger 허용
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
                         // Auth API는 모두 허용
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout"
+                        ).permitAll()
+
+                        //회원가입 & 이메일 인증 API 허용
+                        .requestMatchers(
+                                "/api/v1/users/signup",
+                                "/api/v1/users/email/**"
                         ).permitAll()
 
                         // 모집글 조회(GET)만 공개
@@ -64,6 +76,9 @@ public class SecurityConfig {
                                 "/api/v1/posts/**"
                         ).permitAll()
 
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/parties/*/members"
+                        ).permitAll()
                         // TODO: 공개 API는 여기 추가
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()

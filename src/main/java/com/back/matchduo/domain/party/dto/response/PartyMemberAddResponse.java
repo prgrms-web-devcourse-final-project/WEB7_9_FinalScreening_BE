@@ -18,7 +18,7 @@ public record PartyMemberAddResponse(
     public static PartyMemberAddResponse of(PartyMember member, String nickname, String profileImage) {
         return new PartyMemberAddResponse(
                 member.getId(),
-                member.getUserId(),
+                member.getUser().getId(),
                 nickname,
                 profileImage,
                 member.getRole(),

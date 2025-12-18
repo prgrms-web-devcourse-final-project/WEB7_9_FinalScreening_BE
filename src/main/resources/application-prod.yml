@@ -1,8 +1,19 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
+    profiles:
+      include: secret
+  data:
+    redis:
+      host: redis_1
+      port: ${REDIS_PORT}
+      password: "${REDIS_PW}"
+
   datasource:
-    url: jdbc:mysql://mysql_1:3306/glog_prod
-    username: lldjlocal
-    password: 1234
+    url: jdbc:mysql://mysql_1:3306/${DB_NAME}
+    username: teama5
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -31,7 +42,7 @@ custom:
 
   jwt:
     secretPattern: ${JWT_SECRET}
-    accessExpireSeconds: 1800
+    accessExpireSeconds: 1209600
     refreshExpireSeconds: 1209600
 
   cookie:

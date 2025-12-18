@@ -53,7 +53,8 @@ public class GameAccountController {
     @GetMapping("/{gameAccountId}")
     public ResponseEntity<GameAccountResponse> getGameAccount(
             @PathVariable Long gameAccountId) {
-        GameAccountResponse response = gameAccountService.getGameAccount(gameAccountId);
+        Long userId = AuthPrincipal.getUserId();
+        GameAccountResponse response = gameAccountService.getGameAccount(gameAccountId, userId);
         return ResponseEntity.ok(response);
     }
 

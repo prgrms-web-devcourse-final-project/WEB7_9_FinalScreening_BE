@@ -2,6 +2,8 @@ package com.back.matchduo.domain.party.repository;
 
 import com.back.matchduo.domain.party.entity.PartyMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +21,16 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
 
     // 4. 특정 파티에서 내 멤버 정보 찾기
     Optional<PartyMember> findByPartyIdAndUserId(Long partyId, Long userId);
+
+    @Query("SELECT pm FROM PartyMember pm JOIN FETCH pm.user WHERE pm.party.id = :partyId AND pm.state = 'JOINED'")
+    List<PartyMember> findActiveMembersByPartyId(@Param("partyId") Long partyId);
+
+    // 내 파티 목록 조회 (Party 정보까지 Fetch Join)
+    // 최신순(joinedAt 내림차순)으로 정렬
+    @Query("SELECT pm FROM PartyMember pm JOIN FETCH pm.party WHERE pm.user.id = :userId ORDER BY pm.joinedAt DESC")
+    List<PartyMember> findAllByUserIdWithParty(@Param("userId") Long userId);
+
+    long countByParty_PostId(Long postId);
+    List<PartyMember> findAllByParty_PostId(Long postId);
+
 }

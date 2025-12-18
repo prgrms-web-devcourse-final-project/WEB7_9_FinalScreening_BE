@@ -10,6 +10,8 @@ import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.gameaccount.repository.RankRepository;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;
+import com.back.matchduo.global.exeption.CustomErrorCode;
+import com.back.matchduo.global.exeption.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,15 +45,12 @@ public class GameAccountService {
     public GameAccountResponse createGameAccount(GameAccountCreateRequest request, Long userId) {
         // User 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. userId: " + userId));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.NOT_FOUND_USER));
 
         // 중복 체크: 같은 유저가 같은 게임 타입의 계정을 이미 가지고 있는지 확인
         gameAccountRepository.findByUser_IdAndGameType(userId, request.getGameType())
                 .ifPresent(existingAccount -> {
-                    throw new IllegalArgumentException(
-                        String.format("이미 %s 게임 계정이 등록되어 있습니다. (기존 계정 ID: %d)", 
-                            request.getGameType(), existingAccount.getGameAccountId())
-                    );
+                    throw new CustomException(CustomErrorCode.DUPLICATE_GAME_ACCOUNT);
                 });
 
         // Riot API 호출하여 puuid 가져오기
@@ -103,13 +102,15 @@ public class GameAccountService {
 
     /**
      * 게임 계정 조회
+     * 누구나 다른 사람의 게임 계정도 조회할 수 있습니다.
      * @param gameAccountId 게임 계정 ID
+     * @param userId 인증된 사용자 ID (로그용)
      * @return 게임 계정 정보
      */
     @Transactional(readOnly = true)
-    public GameAccountResponse getGameAccount(Long gameAccountId) {
+    public GameAccountResponse getGameAccount(Long gameAccountId, Long userId) {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
 
         // DB에서 프로필 아이콘 ID 가져오기
         String profileIconUrl = getProfileIconUrl(gameAccount.getProfileIconId());
@@ -167,11 +168,11 @@ public class GameAccountService {
      */
     public GameAccountResponse updateGameAccount(Long gameAccountId, GameAccountUpdateRequest request, Long userId) {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
 
         // 소유자 검증
         if (!gameAccount.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 게임 계정만 수정할 수 있습니다. gameAccountId: " + gameAccountId);
+            throw new CustomException(CustomErrorCode.FORBIDDEN_GAME_ACCOUNT);
         }
 
         // Riot API 호출하여 새로운 puuid 가져오기
@@ -225,11 +226,11 @@ public class GameAccountService {
      */
     public void deleteGameAccount(Long gameAccountId, Long userId) {
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
 
         // 소유자 검증
         if (!gameAccount.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 게임 계정만 삭제할 수 있습니다. gameAccountId: " + gameAccountId);
+            throw new CustomException(CustomErrorCode.FORBIDDEN_GAME_ACCOUNT);
         }
 
         // 관련된 랭크 정보 먼저 삭제
