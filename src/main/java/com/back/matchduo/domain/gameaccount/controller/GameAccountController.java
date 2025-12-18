@@ -4,6 +4,7 @@ import com.back.matchduo.domain.gameaccount.dto.request.GameAccountCreateRequest
 import com.back.matchduo.domain.gameaccount.dto.request.GameAccountUpdateRequest;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountDeleteResponse;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountResponse;
+import com.back.matchduo.domain.gameaccount.dto.response.RefreshAllResponse;
 import com.back.matchduo.domain.gameaccount.service.GameAccountService;
 import com.back.matchduo.global.security.AuthPrincipal;
 import jakarta.validation.Valid;
@@ -87,5 +88,20 @@ public class GameAccountController {
                 .message("게임 계정 연동이 해제되었습니다.")
                 .gameAccountId(gameAccountId)
                 .build());
+    }
+
+    /**
+     * 게임 계정의 랭크 정보와 매치 정보를 함께 갱신 (통합 전적 갱신)
+     * @param gameAccountId 게임 계정 ID
+     * @param matchCount 조회할 매치 개수 (기본값: 20)
+     * @return 갱신된 랭크 정보와 매치 정보
+     */
+    @PostMapping("/{gameAccountId}/refresh-all")
+    public ResponseEntity<RefreshAllResponse> refreshAll(
+            @PathVariable Long gameAccountId,
+            @RequestParam(defaultValue = "20") int matchCount) {
+        Long userId = AuthPrincipal.getUserId();
+        RefreshAllResponse response = gameAccountService.refreshAll(gameAccountId, userId, matchCount);
+        return ResponseEntity.ok(response);
     }
 }

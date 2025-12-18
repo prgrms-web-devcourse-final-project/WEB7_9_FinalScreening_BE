@@ -129,5 +129,72 @@ public class RiotApiClient {
             throw new RuntimeException("Riot Summoner API 호출에 실패했습니다: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * PUUID로 매치 ID 목록 조회
+     * @param puuid PUUID
+     * @param start 시작 인덱스 (0부터)
+     * @param count 조회할 개수 (최대 100)
+     * @return 매치 ID 목록
+     */
+    public List<String> getMatchIdsByPuuid(String puuid, int start, int count) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(riotApiBaseUrl)
+                .path("/lol/match/v5/matches/by-puuid/{puuid}/ids")
+                .queryParam("start", start)
+                .queryParam("count", count)
+                .buildAndExpand(puuid)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Riot-Token", riotApiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<List<String>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<List<String>>() {}
+            );
+
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Riot Match API 호출 실패: puuid={}, start={}, count={}, error={}", 
+                    puuid, start, count, e.getMessage());
+            throw new RuntimeException("Riot Match API 호출에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 매치 ID로 매치 상세 정보 조회
+     * @param matchId 매치 ID (예: "KR_7929968207")
+     * @return 매치 상세 정보
+     */
+    public RiotApiDto.MatchResponse getMatchByMatchId(String matchId) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(riotApiBaseUrl)
+                .path("/lol/match/v5/matches/{matchId}")
+                .buildAndExpand(matchId)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Riot-Token", riotApiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<RiotApiDto.MatchResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    RiotApiDto.MatchResponse.class
+            );
+
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Riot Match API 호출 실패: matchId={}, error={}", matchId, e.getMessage());
+            throw new RuntimeException("Riot Match API 호출에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
 }
 
