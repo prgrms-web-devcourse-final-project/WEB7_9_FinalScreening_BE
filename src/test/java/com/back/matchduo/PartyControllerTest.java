@@ -422,49 +422,131 @@ class PartyControllerTest {
                     .andDo(print());
         }
     }
-/*
 
+    /*
+
+        @Nested
+        @DisplayName("내가 참여한 파티 목록 조회 API")
+        class GetMyPartyList {
+
+            @Test
+            @DisplayName("성공: 내가 참여한 파티 목록(리더 1개 + 멤버 1개)을 최신순으로 조회한다")
+            void success() throws Exception {
+                // given
+                // 1. 기존 setUp()에서 leaderUser는 'testParty'의 LEADER로 참여 중임.
+
+                // 2. [추가 데이터 생성] leaderUser가 MEMBER로 참여할 '두 번째 파티' 생성
+                // 2-1. 게임 모드 (자유랭크)
+                GameMode flexMode = new GameMode("FLEX_RANK", "자유랭크", true);
+                gameModeRepository.save(flexMode);
+
+                // 2-2. 모집글
+                Post secondPost = Post.builder()
+                        .user(targetUser1) // 다른 사람이 쓴 글
+                        .gameMode(flexMode)
+                        .queueType(QueueType.FLEX)
+                        .myPosition(Position.MID)
+                        .lookingPositions("[\"JUNGLE\"]")
+                        .mic(true)
+                        .recruitCount(5)
+                        .memo("자유랭크 달리실 분")
+                        .build();
+                postRepository.save(secondPost);
+
+                // 2-3. 파티 생성
+                Party secondParty = new Party(secondPost.getId(), targetUser1.getId());
+                partyRepository.save(secondParty);
+
+                // 2-4. leaderUser를 멤버로 가입시킴
+                PartyMember secondMemberShip = new PartyMember(secondParty, leaderUser, PartyMemberRole.MEMBER);
+                partyMemberRepository.save(secondMemberShip);
+
+
+                // when
+                // leaderUser(파티장 권한 1개, 일반 멤버 권한 1개 보유)로 요청
+                ResultActions resultActions = mockMvc.perform(
+                        get("/api/v1/parties/my")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .with(user(new CustomUserDetails(leaderUser)))
+                );
+
+                // then
+                resultActions
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.message").value("참여한 파티 목록을 조회했습니다."))
+                        // 리스트 크기 2개 확인
+                        .andExpect(jsonPath("$.data.parties.size()").value(2))
+
+                        // 정렬 순서 확인 (최신순: secondParty -> testParty)
+                        // [0] 번째 요소: 방금 가입한 두 번째 파티 (자유랭크)
+                        .andExpect(jsonPath("$.data.parties[0].partyId").value(secondParty.getId()))
+                        .andExpect(jsonPath("$.data.parties[0].postTitle").value("자유랭크 달리실 분"))
+                        .andExpect(jsonPath("$.data.parties[0].gameMode").value("자유랭크"))
+                        .andExpect(jsonPath("$.data.parties[0].myRole").value("MEMBER")) // 여기선 멤버
+
+                        // [1] 번째 요소: setUp에서 가입한 첫 번째 파티 (솔로랭크)
+                        .andExpect(jsonPath("$.data.parties[1].partyId").value(testParty.getId()))
+                        .andExpect(jsonPath("$.data.parties[1].postTitle").value("테스트 모집글"))
+                        .andExpect(jsonPath("$.data.parties[1].gameMode").value("솔로랭크"))
+                        .andExpect(jsonPath("$.data.parties[1].myRole").value("LEADER")) // 여기선 리더
+
+                        .andDo(print());
+            }
+
+            @Test
+            @DisplayName("실패: 비로그인 상태로 요청 시 401 Unauthorized")
+            void fail_unauthorized() throws Exception {
+                // given
+                // 토큰 없음
+
+                // when
+                ResultActions resultActions = mockMvc.perform(
+                        get("/api/v1/parties/my")
+                                .accept(MediaType.APPLICATION_JSON)
+                );
+
+                // then
+                resultActions
+                        // Controller에서 userDetails == null 체크로 예외를 던짐
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("UNAUTHORIZED_USER"))
+                        .andDo(print());
+            }
+
+            @Test
+            @DisplayName("성공: 참여한 파티가 하나도 없을 때 빈 리스트 반환")
+            void success_empty_list() throws Exception {
+                // given
+                // 아무 파티에도 가입하지 않은 targetUser2 로 로그인
+
+                // when
+                ResultActions resultActions = mockMvc.perform(
+                        get("/api/v1/parties/my")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .with(user(new CustomUserDetails(targetUser2)))
+                );
+
+                // then
+                resultActions
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.data.parties").isArray())
+                        .andExpect(jsonPath("$.data.parties").isEmpty()) // 빈 배열 확인
+                        .andDo(print());
+            }
+        }*/
     @Nested
-    @DisplayName("내가 참여한 파티 목록 조회 API")
-    class GetMyPartyList {
+    @DisplayName("파티 수동 종료 API")
+    class CloseParty {
 
         @Test
-        @DisplayName("성공: 내가 참여한 파티 목록(리더 1개 + 멤버 1개)을 최신순으로 조회한다")
+        @DisplayName("성공: 파티장이 파티를 종료하면 상태가 CLOSED로 변경된다")
         void success() throws Exception {
             // given
-            // 1. 기존 setUp()에서 leaderUser는 'testParty'의 LEADER로 참여 중임.
-
-            // 2. [추가 데이터 생성] leaderUser가 MEMBER로 참여할 '두 번째 파티' 생성
-            // 2-1. 게임 모드 (자유랭크)
-            GameMode flexMode = new GameMode("FLEX_RANK", "자유랭크", true);
-            gameModeRepository.save(flexMode);
-
-            // 2-2. 모집글
-            Post secondPost = Post.builder()
-                    .user(targetUser1) // 다른 사람이 쓴 글
-                    .gameMode(flexMode)
-                    .queueType(QueueType.FLEX)
-                    .myPosition(Position.MID)
-                    .lookingPositions("[\"JUNGLE\"]")
-                    .mic(true)
-                    .recruitCount(5)
-                    .memo("자유랭크 달리실 분")
-                    .build();
-            postRepository.save(secondPost);
-
-            // 2-3. 파티 생성
-            Party secondParty = new Party(secondPost.getId(), targetUser1.getId());
-            partyRepository.save(secondParty);
-
-            // 2-4. leaderUser를 멤버로 가입시킴
-            PartyMember secondMemberShip = new PartyMember(secondParty, leaderUser, PartyMemberRole.MEMBER);
-            partyMemberRepository.save(secondMemberShip);
 
 
             // when
-            // leaderUser(파티장 권한 1개, 일반 멤버 권한 1개 보유)로 요청
             ResultActions resultActions = mockMvc.perform(
-                    get("/api/v1/parties/my")
+                    patch("/api/v1/parties/{partyId}/close", testParty.getId())
                             .accept(MediaType.APPLICATION_JSON)
                             .with(user(new CustomUserDetails(leaderUser)))
             );
@@ -472,67 +554,52 @@ class PartyControllerTest {
             // then
             resultActions
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").value("참여한 파티 목록을 조회했습니다."))
-                    // 리스트 크기 2개 확인
-                    .andExpect(jsonPath("$.data.parties.size()").value(2))
-
-                    // 정렬 순서 확인 (최신순: secondParty -> testParty)
-                    // [0] 번째 요소: 방금 가입한 두 번째 파티 (자유랭크)
-                    .andExpect(jsonPath("$.data.parties[0].partyId").value(secondParty.getId()))
-                    .andExpect(jsonPath("$.data.parties[0].postTitle").value("자유랭크 달리실 분"))
-                    .andExpect(jsonPath("$.data.parties[0].gameMode").value("자유랭크"))
-                    .andExpect(jsonPath("$.data.parties[0].myRole").value("MEMBER")) // 여기선 멤버
-
-                    // [1] 번째 요소: setUp에서 가입한 첫 번째 파티 (솔로랭크)
-                    .andExpect(jsonPath("$.data.parties[1].partyId").value(testParty.getId()))
-                    .andExpect(jsonPath("$.data.parties[1].postTitle").value("테스트 모집글"))
-                    .andExpect(jsonPath("$.data.parties[1].gameMode").value("솔로랭크"))
-                    .andExpect(jsonPath("$.data.parties[1].myRole").value("LEADER")) // 여기선 리더
-
+                    .andExpect(jsonPath("$.message").value("파티가 종료되었습니다."))
+                    .andExpect(jsonPath("$.data.partyId").value(testParty.getId()))
+                    .andExpect(jsonPath("$.data.status").value("CLOSED")) // 상태 변경 확인
+                    .andExpect(jsonPath("$.data.closedAt").exists())
                     .andDo(print());
         }
 
         @Test
-        @DisplayName("실패: 비로그인 상태로 요청 시 401 Unauthorized")
-        void fail_unauthorized() throws Exception {
+        @DisplayName("실패: 파티장이 아닌 유저가 종료를 시도하면 403 Forbidden")
+        void fail_not_leader() throws Exception {
             // given
-            // 토큰 없음
 
             // when
             ResultActions resultActions = mockMvc.perform(
-                    get("/api/v1/parties/my")
+                    patch("/api/v1/parties/{partyId}/close", testParty.getId())
                             .accept(MediaType.APPLICATION_JSON)
+                            .with(user(new CustomUserDetails(memberUser)))
             );
 
             // then
             resultActions
-                    // Controller에서 userDetails == null 체크로 예외를 던짐
-                    .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.code").value("UNAUTHORIZED_USER"))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value("NOT_PARTY_LEADER"))
                     .andDo(print());
         }
 
         @Test
-        @DisplayName("성공: 참여한 파티가 하나도 없을 때 빈 리스트 반환")
-        void success_empty_list() throws Exception {
+        @DisplayName("실패: 이미 종료된 파티를 다시 종료하려 하면 400 Bad Request")
+        void fail_already_closed() throws Exception {
             // given
-            // 아무 파티에도 가입하지 않은 targetUser2 로 로그인
+            testParty.closeParty();
+            partyRepository.saveAndFlush(testParty);
 
             // when
             ResultActions resultActions = mockMvc.perform(
-                    get("/api/v1/parties/my")
+                    patch("/api/v1/parties/{partyId}/close", testParty.getId())
                             .accept(MediaType.APPLICATION_JSON)
-                            .with(user(new CustomUserDetails(targetUser2)))
+                            .with(user(new CustomUserDetails(leaderUser)))
             );
 
             // then
             resultActions
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.parties").isArray())
-                    .andExpect(jsonPath("$.data.parties").isEmpty()) // 빈 배열 확인
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("PARTY_ALREADY_CLOSED"))
                     .andDo(print());
         }
     }
 }
-*/
 

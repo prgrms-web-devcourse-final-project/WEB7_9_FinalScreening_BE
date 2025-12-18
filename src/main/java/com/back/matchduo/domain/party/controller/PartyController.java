@@ -98,4 +98,19 @@ public class PartyController {
 
         return ResponseEntity.ok(ApiResponse.ok("참여한 파티 목록을 조회했습니다.", response));
     }
+
+    // 6. 파티 상태 수동 종료(파티장)
+    @PatchMapping("/parties/{partyId}/close")
+    public ResponseEntity<ApiResponse<PartyCloseResponse>> closeParty(
+            @PathVariable Long partyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
+        }
+
+        PartyCloseResponse response = partyService.closeParty(partyId, userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.ok("파티가 종료되었습니다.", response));
+    }
 }
