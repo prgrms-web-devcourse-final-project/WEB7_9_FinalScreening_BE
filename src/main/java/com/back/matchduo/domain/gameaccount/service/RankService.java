@@ -7,6 +7,8 @@ import com.back.matchduo.domain.gameaccount.entity.GameAccount;
 import com.back.matchduo.domain.gameaccount.entity.Rank;
 import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.gameaccount.repository.RankRepository;
+import com.back.matchduo.global.exeption.CustomErrorCode;
+import com.back.matchduo.global.exeption.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,23 +46,19 @@ public class RankService {
 
     /**
      * 게임 계정의 랭크 정보 갱신 (전적 갱신)
+     * 누구나 다른 사람의 게임 계정 전적도 갱신할 수 있습니다.
      * @param gameAccountId 게임 계정 ID
-     * @param userId 인증된 사용자 ID
+     * @param userId 인증된 사용자 ID (로그용)
      * @return 갱신된 랭크 정보 목록
      */
     public List<RankResponse> refreshRankData(Long gameAccountId, Long userId) {
         // 게임 계정 조회
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
-
-        // 소유자 검증
-        if (!gameAccount.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 게임 계정만 랭크 정보를 갱신할 수 있습니다. gameAccountId: " + gameAccountId);
-        }
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
 
         // puuid가 없으면 랭크 정보를 가져올 수 없음
         if (gameAccount.getPuuid() == null || gameAccount.getPuuid().isEmpty()) {
-            throw new IllegalArgumentException("게임 계정에 puuid가 없습니다. 먼저 게임 계정을 등록해주세요.");
+            throw new CustomException(CustomErrorCode.GAME_ACCOUNT_NO_PUUID);
         }
 
         // Riot API 호출하여 랭크 정보 가져오기
@@ -70,7 +68,7 @@ public class RankService {
             log.info("Riot API 호출 성공: gameAccountId={}, 랭크 정보 개수={}", gameAccountId, rankResponses != null ? rankResponses.size() : 0);
         } catch (Exception e) {
             log.error("Riot API 호출 실패: gameAccountId={}, error={}", gameAccountId, e.getMessage());
-            throw new RuntimeException("랭크 정보를 가져오는데 실패했습니다: " + e.getMessage(), e);
+            throw new CustomException(CustomErrorCode.RANK_FETCH_FAILED);
         }
 
         if (rankResponses == null || rankResponses.isEmpty()) {
@@ -120,26 +118,23 @@ public class RankService {
         // 프로필 아이콘도 함께 갱신
         gameAccountService.refreshProfileIconId(gameAccount);
 
-        log.info("랭크 정보 갱신 완료: gameAccountId={}, 갱신된 랭크 개수={}", gameAccountId, savedRanks.size());
+        log.info("랭크 정보 갱신 완료: gameAccountId={}, 요청자 userId={}, 소유자 userId={}, 갱신된 랭크 개수={}", 
+                gameAccountId, userId, gameAccount.getUser().getId(), savedRanks.size());
         return savedRanks;
     }
 
     /**
      * 게임 계정의 모든 랭크 정보 조회
+     * 누구나 다른 사람의 게임 계정 랭크 정보도 조회할 수 있습니다.
      * @param gameAccountId 게임 계정 ID
-     * @param userId 인증된 사용자 ID
+     * @param userId 인증된 사용자 ID (로그용)
      * @return 랭크 정보 목록
      */
     @Transactional(readOnly = true)
     public List<RankResponse> getRanksByGameAccountId(Long gameAccountId, Long userId) {
-        // 게임 계정 조회 및 소유자 검증
+        // 게임 계정 조회
         GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("게임 계정을 찾을 수 없습니다. gameAccountId: " + gameAccountId));
-
-        // 소유자 검증
-        if (!gameAccount.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 게임 계정만 랭크 정보를 조회할 수 있습니다. gameAccountId: " + gameAccountId);
-        }
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
 
         List<Rank> ranks = rankRepository.findByGameAccount_GameAccountId(gameAccountId);
         return ranks.stream()

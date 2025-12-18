@@ -29,4 +29,8 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
     // 최신순(joinedAt 내림차순)으로 정렬
     @Query("SELECT pm FROM PartyMember pm JOIN FETCH pm.party WHERE pm.user.id = :userId ORDER BY pm.joinedAt DESC")
     List<PartyMember> findAllByUserIdWithParty(@Param("userId") Long userId);
+
+    long countByParty_PostId(Long postId);
+    List<PartyMember> findAllByParty_PostId(Long postId);
+
 }

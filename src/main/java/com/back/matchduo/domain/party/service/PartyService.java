@@ -188,7 +188,6 @@ public class PartyService {
 
 
      // 파티원 목록 조회 (로그인 불필요)
-    @Transactional(readOnly = true)
     public PartyMemberListResponse getPartyMemberList(Long partyId) {
         // 1. 파티 정보 조회
         Party party = partyRepository.findById(partyId)
@@ -230,7 +229,6 @@ public class PartyService {
 
 
     // 내가 참여한 파티 목록 조회
-    @Transactional(readOnly = true)
     public MyPartyListResponse getMyPartyList(Long currentUserId) {
         // 1. 내가 참여한 파티 멤버십 조회 (Party 정보 포함)
         List<PartyMember> myMemberships = partyMemberRepository.findAllByUserIdWithParty(currentUserId);
@@ -272,5 +270,34 @@ public class PartyService {
                 .toList();
 
         return new MyPartyListResponse(partyDtos);
+    }
+
+
+    // 파티 상태 수동 종료
+    @Transactional
+    public PartyCloseResponse closeParty(Long partyId, Long currentUserId) {
+        // 1. 파티 조회
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.PARTY_NOT_FOUND));
+
+        // 2. [검증] 요청자가 파티장인지 확인
+        if (!party.getLeaderId().equals(currentUserId)) {
+            throw new CustomException(CustomErrorCode.NOT_PARTY_LEADER);
+        }
+
+        // 3. [검증] 이미 종료된 파티인지 확인
+        if (party.getStatus() == PartyStatus.CLOSED) {
+            throw new CustomException(CustomErrorCode.PARTY_ALREADY_CLOSED);
+        }
+
+        // 4. 상태 변경 (ACTIVE -> CLOSED)
+        party.closeParty();
+
+        // 5. 응답 반환
+        return new PartyCloseResponse(
+                party.getId(),
+                party.getStatus().name(),
+                party.getClosedAt()
+        );
     }
 }
