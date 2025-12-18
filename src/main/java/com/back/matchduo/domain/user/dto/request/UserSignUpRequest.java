@@ -23,5 +23,5 @@ public record UserSignUpRequest(
 
         @NotBlank
         @Schema(description = "인증번호", example = "asd123")
-        String verification_code
+        String verificationCode
 ) { }
