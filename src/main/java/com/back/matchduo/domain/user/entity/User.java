@@ -32,10 +32,10 @@ public class User extends BaseEntity {
     private String comment;
 
     @Column(name = "profile_image")
-    private String profileImage;
+    private String profile_image;
 
     @Column(name = "verification_code", length = 100, nullable = false)
-    private String verificationCode;
+    private String verification_code;
 
     public static User createUser(String email, String password, String nickname) {
         User user = new User();
@@ -43,5 +43,25 @@ public class User extends BaseEntity {
         user.password = password;
         user.nickname = nickname;
         return user;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public void setProfile_image(String profile_image) {
+        this.profile_image = profile_image;
     }
 }

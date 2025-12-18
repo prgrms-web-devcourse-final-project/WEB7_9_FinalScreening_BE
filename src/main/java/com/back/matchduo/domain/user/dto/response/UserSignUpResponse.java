@@ -17,7 +17,7 @@ public record UserSignUpResponse(
         return new UserSignUpResponse(
                 user.getEmail(),
                 user.getPassword(),
-                user.getVerificationCode()
+                user.getVerification_code()
         );
     }
 }

@@ -29,7 +29,7 @@ public record UserProfileRequest(
     public static UserProfileRequest from(User user) {
         return new UserProfileRequest(
                 user.getEmail(),
-                user.getProfileImage(),
+                user.getProfile_image(),
                 user.getNickname(),
                 user.getComment()
         );

@@ -30,6 +30,9 @@ public enum CustomErrorCode {
     EXPIRED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "인증 코드가 만료되었습니다."),
     EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 전송에 실패했습니다."),
     EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "이메일 인증이 완료되지 않았습니다."),
+    PASSWORD_SHORTAGE(HttpStatus.BAD_REQUEST, "비밀번호 변경을 위해 모든 비밀번호 항목을 입력해야 합니다."),
+    PASSWORD_INCONSISTENCY(HttpStatus.UNAUTHORIZED, "새 비밀번호가 일치하지 않습니다."),
+    WRONG_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다."),
 
     // 3. Party (파티)
     PARTY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 파티를 찾을 수 없습니다."),
