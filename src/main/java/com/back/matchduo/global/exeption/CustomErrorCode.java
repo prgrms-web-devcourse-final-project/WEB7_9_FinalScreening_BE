@@ -59,7 +59,14 @@ public enum CustomErrorCode {
     CHAT_ROOM_MISMATCH(HttpStatus.BAD_REQUEST, "다른 채팅방의 메시지로 읽음 처리를 할 수 없습니다."),
     CHAT_INVALID_SESSION(HttpStatus.BAD_REQUEST, "메시지의 세션 정보가 올바르지 않습니다."),
     CHAT_READ_STATE_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "읽음 상태의 채팅방 정보가 올바르지 않습니다."),
-    CHAT_USER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "해당 채팅방의 참여자가 아닙니다.");
+    CHAT_USER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "해당 채팅방의 참여자가 아닙니다."),
+
+    // 6. GameAccount (게임 계정)
+    GAME_ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "게임 계정을 찾을 수 없습니다."),
+    DUPLICATE_GAME_ACCOUNT(HttpStatus.CONFLICT, "이미 해당 게임 계정이 등록되어 있습니다."),
+    FORBIDDEN_GAME_ACCOUNT(HttpStatus.FORBIDDEN, "본인의 게임 계정만 접근할 수 있습니다."),
+    GAME_ACCOUNT_NO_PUUID(HttpStatus.BAD_REQUEST, "게임 계정에 puuid가 없습니다. 먼저 게임 계정을 등록해주세요."),
+    RANK_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "랭크 정보를 가져오는데 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;

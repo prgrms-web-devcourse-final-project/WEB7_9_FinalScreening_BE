@@ -11,7 +11,7 @@ public record PostWriter(
         return new PostWriter(
                 user.getId(),
                 user.getNickname(),
-                user.getProfile_image()
+                user.getProfileImage()
         );
     }
 }

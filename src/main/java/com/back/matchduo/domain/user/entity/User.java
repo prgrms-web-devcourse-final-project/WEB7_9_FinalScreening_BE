@@ -31,11 +31,11 @@ public class User extends BaseEntity {
     @Column(length = 100)
     private String comment;
 
-    @Column
-    private String profile_image;
+    @Column(name = "profile_image")
+    private String profileImage;
 
-    @Column(length = 100, nullable = false)
-    private String verification_code;
+    @Column(name = "verification_code", length = 100, nullable = false)
+    private String verificationCode;
 
     public static User createUser(String email, String password, String nickname) {
         User user = new User();

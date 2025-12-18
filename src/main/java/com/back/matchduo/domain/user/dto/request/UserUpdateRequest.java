@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserUpdateRequest(
+        @NotBlank
         @Schema(description = "이메일", example = "user@email.com")
         String email,
 
@@ -18,6 +19,20 @@ public record UserUpdateRequest(
                 message = "비밀번호는 8글자 이상, 영어 소문자와 숫자, 특수문자를 포함해야 합니다."
         )
         String password,
+
+        @Schema(description = "새 비밀번호", example = "password456")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])[a-z\\d!@#$%^&*]{8,30}$",
+                message = "비밀번호는 8글자 이상, 영어 소문자와 숫자, 특수문자를 포함해야 합니다."
+        )
+        String newPassword,
+
+        @Schema(description = "새 비밀번호 확인", example = "password456")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])[a-z\\d!@#$%^&*]{8,30}$",
+                message = "비밀번호는 8글자 이상, 영어 소문자와 숫자, 특수문자를 포함해야 합니다."
+        )
+        String newPasswordConfirm,
 
         @NotBlank
         @Schema(description = "닉네임", example = "nick")

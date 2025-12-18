@@ -14,15 +14,23 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableConfigurationProperties({JwtProperties.class, CookieProperties.class})
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtProvider jwtProvider,
+            CorsConfigurationSource corsConfigurationSource
+    ) throws Exception {
 
         http
+                // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
                 // CSRF 사용 안 함 (JWT + Cookie 기반)
                 .csrf(csrf -> csrf.disable())
 
@@ -43,11 +51,25 @@ public class SecurityConfig {
 
                 // 인가 규칙
                 .authorizeHttpRequests(auth -> auth
+                        //Swagger 허용
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
                         // Auth API는 모두 허용
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/logout"
+                                "/api/v1/auth/logout",
+                                "/api/v1/users/signup",
+                                "/api/v1/users/email/**"
+                        ).permitAll()
+
+                        //회원가입 & 이메일 인증 API 허용
+                        .requestMatchers(
+                                "/api/v1/users/signup",
+                                "/api/v1/users/email/**"
                         ).permitAll()
 
                         // 모집글 조회(GET)만 공개
