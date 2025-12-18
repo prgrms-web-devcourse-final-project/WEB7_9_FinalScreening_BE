@@ -39,6 +39,9 @@ public enum CustomErrorCode {
     NOT_PARTY_LEADER(HttpStatus.FORBIDDEN, "파티장만 접근할 수 있는 권한입니다."),
     PARTY_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "파티 멤버 정보를 찾을 수 없습니다."),
     ALREADY_JOINED_PARTY(HttpStatus.BAD_REQUEST, "이미 참여 중인 파티입니다."),
+    PARTY_MEMBER_NOT_MATCH(HttpStatus.BAD_REQUEST, "해당 파티 소속이 아닙니다."),
+    CANNOT_KICK_LEADER(HttpStatus.BAD_REQUEST, "파티장은 스스로 강퇴할 수 없습니다."),
+
 
     // 4. Post (모집글) - 추후 구현 시 사용
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 모집글을 찾을 수 없습니다."),

@@ -28,4 +28,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("gameModeId") Long gameModeId,
             Pageable pageable
     );
+
+    // ★ [여기 추가] 게시글 ID 목록으로 조회 + GameMode 함께 조회 (N+1 방지)
+    // 내가 참여한 파티 리스트를 보여줄 때 사용합니다.
+    @Query("SELECT p FROM Post p JOIN FETCH p.gameMode WHERE p.id IN :ids")
+    List<Post> findAllByIdInWithGameMode(@Param("ids") List<Long> ids);
 }

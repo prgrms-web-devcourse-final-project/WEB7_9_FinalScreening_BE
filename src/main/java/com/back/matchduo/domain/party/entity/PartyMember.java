@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.party.entity;
 
+import com.back.matchduo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,8 +32,9 @@ public class PartyMember {
     @JoinColumn(name = "party_id", nullable = false)
     private Party party;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,9 +51,9 @@ public class PartyMember {
     private LocalDateTime leftAt;
 
 
-    public PartyMember(Party party, Long userId, PartyMemberRole role) {
+    public PartyMember(Party party, User user, PartyMemberRole role) {
         this.party = party;
-        this.userId = userId;
+        this.user = user;
         this.role = role;
         this.state = PartyMemberState.JOINED;
         this.joinedAt = LocalDateTime.now();

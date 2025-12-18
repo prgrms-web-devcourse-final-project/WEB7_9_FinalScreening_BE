@@ -78,6 +78,9 @@ public class SecurityConfig {
                                 "/api/v1/posts/**"
                         ).permitAll()
 
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/parties/*/members"
+                        ).permitAll()
                         // TODO: 공개 API는 여기 추가
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()
