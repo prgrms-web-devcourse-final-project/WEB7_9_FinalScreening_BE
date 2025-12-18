@@ -25,7 +25,7 @@ public class UserProfileService {
     public UserProfileRequest getProfile(User user) {
         return new UserProfileRequest(
                 user.getEmail(),
-                user.getProfile_image(),
+                user.getProfileImage(),
                 user.getNickname(),
                 user.getComment()
         );
