@@ -34,7 +34,7 @@ public class User extends BaseEntity {
     @Column(name = "profile_image")
     private String profileImage;
 
-    @Column(name = "verification_code", length = 100)
+    @Column(name = "verification_code", length = 100, nullable = true)
     private String verificationCode;
 
     public static User createUser(String email, String password, String nickname) {
