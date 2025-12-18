@@ -32,10 +32,10 @@ public class User extends BaseEntity {
     private String comment;
 
     @Column(name = "profile_image")
-    private String profile_image;
+    private String profileImage;
 
     @Column(name = "verification_code", length = 100, nullable = false)
-    private String verification_code;
+    private String verificationCode;
 
     public static User createUser(String email, String password, String nickname) {
         User user = new User();
@@ -61,7 +61,7 @@ public class User extends BaseEntity {
         this.comment = comment;
     }
 
-    public void setProfile_image(String profile_image) {
-        this.profile_image = profile_image;
+    public void setProfile_image(String profileImage) {
+        this.profileImage = profileImage;
     }
 }

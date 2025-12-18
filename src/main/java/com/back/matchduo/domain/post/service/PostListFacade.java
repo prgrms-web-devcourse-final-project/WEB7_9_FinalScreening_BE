@@ -89,7 +89,7 @@ public class PostListFacade {
                 new PostParticipant(
                         writer.getId(),
                         writer.getNickname(),
-                        writer.getProfile_Image(),
+                        writer.getProfileImage(),
                         PartyMemberRole.LEADER.name()
                 )
         );
@@ -131,7 +131,7 @@ public class PostListFacade {
                 new PostParticipant(
                         writer.getId(),
                         writer.getNickname(),
-                        writer.getProfile_Image(),
+                        writer.getProfileImage(),
                         PartyMemberRole.LEADER.name()
                 )
         );
@@ -265,7 +265,7 @@ public class PostListFacade {
             PostWriter writerDto = new PostWriter(
                     writer.getId(),
                     writer.getNickname(),
-                    writer.getProfile_Image(),
+                    writer.getProfileImage(),
                     writerGameAccount,
                     writerGameSummary
             );
@@ -284,7 +284,7 @@ public class PostListFacade {
                     participants.add(new PostParticipant(
                             u.getId(),
                             u.getNickname(),
-                            u.getProfile_Image(),
+                            u.getProfileImage(),
                             pm.getRole().name()
                     ));
                 }
@@ -294,7 +294,7 @@ public class PostListFacade {
                 participants.add(new PostParticipant(
                         writer.getId(),
                         writer.getNickname(),
-                        writer.getProfile_Image(),
+                        writer.getProfileImage(),
                         PartyMemberRole.LEADER.name()
                 ));
             }
@@ -358,7 +358,7 @@ public class PostListFacade {
         return new PostWriter(
                 writer.getId(),
                 writer.getNickname(),
-                writer.getProfile_Image(),
+                writer.getProfileImage(),
                 gameAccount,
                 gameSummary
         );

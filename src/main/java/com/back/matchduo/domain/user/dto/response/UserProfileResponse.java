@@ -28,7 +28,7 @@ public record UserProfileResponse(
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
                 user.getEmail(),
-                user.getProfile_image(),
+                user.getProfileImage(),
                 user.getNickname(),
                 user.getComment()
         );
