@@ -57,6 +57,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
+                        //타인 프로필 조회(GET) 허용
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/{userId}").permitAll()
+
                         // Auth API는 모두 허용
                         .requestMatchers(
                                 "/api/v1/auth/login",
