@@ -82,6 +82,13 @@ public class SecurityConfig {
                         // TODO: 공개 API는 여기 추가
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/ws/**"
+                        ).permitAll()
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
