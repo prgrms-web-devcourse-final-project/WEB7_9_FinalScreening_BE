@@ -84,10 +84,9 @@ public class SecurityConfig {
                         // TODO: 공개 API는 여기 추가
                         // 예: 모집글 목록/상세, 게임모드 목록 등
                         // .requestMatchers("/api/v1/posts/**").permitAll()
-                        .requestMatchers(
-                                "/api/v1/chats/**",
-                                "/ws/**"
-                        ).permitAll()
+
+                        // WebSocket 엔드포인트만 permitAll (STOMP 인증은 StompAuthChannelInterceptor에서 처리)
+                        .requestMatchers("/ws/**").permitAll()
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
