@@ -11,7 +11,7 @@ on:
       - "Dockerfile"
     branches:
       - main
-      - feat/#4/review-api
+      - chore/#48/deploy-fix-final
 
 # 권한 최소화/명시화
 permissions:
@@ -116,5 +116,10 @@ jobs:
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker stop app1 2>/dev/null || true && \
             docker rm app1 2>/dev/null || true && \
-            docker run -d --name app1 --network common -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker run -d --name app1 \
+            --network common -p 8080:8080 \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e EC2_DB_USER=${{ secrets.DB_USER }} \
+            -e EC2_DB_PW=${{ secrets.DB_PW }} \
+            ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker image prune -f
