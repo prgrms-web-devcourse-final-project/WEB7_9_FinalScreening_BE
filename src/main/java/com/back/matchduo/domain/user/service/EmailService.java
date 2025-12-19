@@ -30,8 +30,13 @@ public class EmailService {
     @Transactional
     public void createAndSendVerificationCode(String email) {
 
-        verificationRepository.findByEmail(email)
-                .ifPresent(verificationRepository::delete);
+//        verificationRepository.findByEmail(email)
+//                .ifPresent(verificationRepository::delete);
+        //이전 회원정보들 지우고 다시 해볼 수 있다
+        verificationRepository.findByEmail(email).ifPresent(verification -> {
+            verificationRepository.delete(verification);
+            verificationRepository.flush();
+        });
 
         String code = generateVerificationCode();
 

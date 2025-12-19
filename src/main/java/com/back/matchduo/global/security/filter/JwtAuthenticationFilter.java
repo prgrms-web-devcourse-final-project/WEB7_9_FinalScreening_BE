@@ -80,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .findFirst()
                 .orElse(null);
     }
-
+/*
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -99,4 +99,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // 토큰 재발급
                         (uri.equals("/api/v1/auth/refresh") && method.equals("POST"));
     }
+    */
 }

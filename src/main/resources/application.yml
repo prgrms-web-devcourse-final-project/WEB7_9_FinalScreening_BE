@@ -12,6 +12,8 @@ spring:
       auto-commit: false
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: update  # 15,16추가
     properties:
       hibernate:
         format_sql: true

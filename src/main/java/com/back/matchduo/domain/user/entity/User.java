@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "user")
+@Table(name = "users")
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,11 +39,12 @@ public class User extends BaseEntity {
     private String verificationCode;
 
     public static User createUser(String email, String password, String nickname) {
-        User user = new User();
-        user.email = email;
-        user.password = password;
-        user.nickname = nickname;
-        return user;
+        return User.builder()
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .verificationCode("VERIFIED") // DB가 NULL을 거부하므로 명시적으로 값을 넣어줌
+                .build();
     }
 
     public void setEmail(String email) {

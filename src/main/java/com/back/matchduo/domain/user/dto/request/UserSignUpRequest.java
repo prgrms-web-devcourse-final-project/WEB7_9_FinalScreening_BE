@@ -10,7 +10,7 @@ public record UserSignUpRequest(
         String email,
 
         @NotBlank
-        @Schema(description = "비밀번호", example = "password123")
+        @Schema(description = "비밀번호", example = "password123!")
         @Pattern(
                 regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])[a-z\\d!@#$%^&*]{8,100}$",
                 message = "비밀번호는 8글자 이상, 영어 소문자와 숫자, 특수문자(!, @, #, $, %, ^, &, *)를 포함해야 합니다."
@@ -18,10 +18,10 @@ public record UserSignUpRequest(
         String password,
 
         @NotBlank
-        @Schema(description = "비밀번호 확인", example = "password123")
+        @Schema(description = "비밀번호 확인", example = "password123!")
         String passwordConfirm,
 
         @NotBlank
         @Schema(description = "인증번호", example = "asd123")
-        String verification_code
+        String verificationCode
 ) { }
