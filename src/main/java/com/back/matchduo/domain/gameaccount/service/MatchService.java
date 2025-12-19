@@ -417,99 +417,26 @@ public class MatchService {
 
     /**
      * 스타일 ID를 스타일 이름으로 변환
-     * Data Dragon API에서 동적으로 가져온 매핑을 우선 사용하고, 없으면 하드코딩된 매핑 사용
+     * Data Dragon API에서 동적으로 가져온 매핑 사용
      */
     private String getStyleName(Integer styleId) {
         if (styleId == null) {
             return null;
         }
         
-        // Data Dragon API에서 동적으로 가져온 매핑 우선 사용
-        String styleName = dataDragonService.getStyleName(styleId);
-        if (styleName != null) {
-            return styleName;
-        }
-        
-        // Fallback: 하드코딩된 매핑
-        return switch (styleId) {
-            case 8000 -> "Precision";
-            case 8100 -> "Domination";
-            case 8200 -> "Sorcery";
-            case 8300 -> "Inspiration";
-            case 8400 -> "Resolve";
-            default -> null;
-        };
+        return dataDragonService.getStyleName(styleId);
     }
 
     /**
      * 룬 ID를 룬 이름으로 변환
-     * Data Dragon API에서 동적으로 가져온 매핑을 우선 사용하고, 없으면 하드코딩된 매핑 사용
+     * Data Dragon API에서 동적으로 가져온 매핑 사용
      */
     private String getPerkName(Integer styleId, Integer perkId) {
         if (styleId == null || perkId == null) {
             return null;
         }
         
-        // Data Dragon API에서 동적으로 가져온 매핑 우선 사용
-        String perkName = dataDragonService.getPerkName(styleId, perkId);
-        if (perkName != null) {
-            return perkName;
-        }
-        
-        // Fallback: 하드코딩된 매핑 (기존 룬들)
-        // Precision (8000)
-        if (styleId == 8000) {
-            return switch (perkId) {
-                case 8005 -> "PressTheAttack";
-                case 8008 -> "LethalTempo";
-                case 8021 -> "FleetFootwork";
-                case 8010 -> "Conqueror";
-                default -> null;
-            };
-        }
-        
-        // Domination (8100)
-        if (styleId == 8100) {
-            return switch (perkId) {
-                case 8112 -> "Electrocute";
-                case 8124 -> "Predator";
-                case 8128 -> "DarkHarvest";
-                case 9923 -> "HailOfBlades";
-                default -> null;
-            };
-        }
-        
-        // Sorcery (8200)
-        if (styleId == 8200) {
-            return switch (perkId) {
-                case 8214 -> "SummonAery";
-                case 8229 -> "ArcaneComet";
-                case 8230 -> "PhaseRush";
-                default -> null;
-            };
-        }
-        
-        // Inspiration (8300)
-        if (styleId == 8300) {
-            return switch (perkId) {
-                case 8351 -> "GlacialAugment";
-                case 8360 -> "UnsealedSpellbook";
-                case 8369 -> "FirstStrike";
-                default -> null;
-            };
-        }
-        
-        // Resolve (8400)
-        if (styleId == 8400) {
-            return switch (perkId) {
-                case 8437 -> "GraspOfTheUndying";
-                case 8439 -> "Aftershock";
-                case 8465 -> "Guardian";
-                default -> null;
-            };
-        }
-        
-        return null;
+        return dataDragonService.getPerkName(styleId, perkId);
     }
 
     /**
