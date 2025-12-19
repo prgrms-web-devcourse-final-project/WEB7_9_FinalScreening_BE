@@ -374,16 +374,24 @@ public class MatchService {
                         && !primaryStyle.getSelections().isEmpty()) {
                     Integer primaryPerk = primaryStyle.getSelections().get(0).getPerk();
                     if (primaryPerk != null) {
-                        // 주 룬 메인 룬 이미지 URL 생성 (예: 정복자)
-                        imageUrls.add(String.format(
-                                "https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/%d/%d.png",
-                                primaryStyle.getStyle(), primaryPerk
-                        ));
+                        // 주 룬 메인 룬 이미지 URL 생성 (이름 기반 URL 형식)
+                        String styleName = getStyleName(primaryStyle.getStyle());
+                        String perkName = getPerkName(primaryStyle.getStyle(), primaryPerk);
+                        if (styleName != null && perkName != null) {
+                            // 특정 룬은 파일명에 "Temp" 접미사 필요 (예: LethalTempo)
+                            String fileName = needsTempSuffix(primaryStyle.getStyle(), primaryPerk) 
+                                    ? perkName + "Temp" 
+                                    : perkName;
+                            imageUrls.add(String.format(
+                                    "https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/%s/%s/%s.png",
+                                    styleName, perkName, fileName
+                            ));
+                        }
                     }
                 }
             }
             
-            // 부 룬 스타일의 메인 룬 이미지 (예: 지배)
+            // 부 룬 스타일의 메인 룬 이미지 (예: 지배) - 기존 방식 유지
             if (perks.getStyles() != null && perks.getStyles().size() > 1) {
                 RiotApiDto.MatchResponse.Participant.Perks.PerkStyle subStyle = perks.getStyles().get(1);
                 if (subStyle != null 
@@ -392,7 +400,7 @@ public class MatchService {
                         && !subStyle.getSelections().isEmpty()) {
                     Integer subPerk = subStyle.getSelections().get(0).getPerk();
                     if (subPerk != null) {
-                        // 부 룬 메인 룬 이미지 URL 생성 (예: 지배 스타일의 메인 룬)
+                        // 부 룬 메인 룬 이미지 URL 생성 (기존 ID 기반 방식)
                         imageUrls.add(String.format(
                                 "https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/%d/%d.png",
                                 subStyle.getStyle(), subPerk
@@ -407,6 +415,104 @@ public class MatchService {
             log.warn("룬 정보 JSON 파싱 실패: {}", e.getMessage());
             return List.of();
         }
+    }
+
+    /**
+     * 스타일 ID를 스타일 이름으로 변환
+     */
+    private String getStyleName(Integer styleId) {
+        if (styleId == null) {
+            return null;
+        }
+        return switch (styleId) {
+            case 8000 -> "Precision";
+            case 8100 -> "Domination";
+            case 8200 -> "Sorcery";
+            case 8300 -> "Inspiration";
+            case 8400 -> "Resolve";
+            default -> null;
+        };
+    }
+
+    /**
+     * 룬 ID를 룬 이름으로 변환
+     */
+    private String getPerkName(Integer styleId, Integer perkId) {
+        if (styleId == null || perkId == null) {
+            return null;
+        }
+        
+        // Precision (8000)
+        if (styleId == 8000) {
+            return switch (perkId) {
+                case 8005 -> "PressTheAttack";
+                case 8008 -> "LethalTempo";
+                case 8021 -> "FleetFootwork";
+                case 8010 -> "Conqueror";
+                default -> null;
+            };
+        }
+        
+        // Domination (8100)
+        if (styleId == 8100) {
+            return switch (perkId) {
+                case 8112 -> "Electrocute";
+                case 8124 -> "Predator";
+                case 8128 -> "DarkHarvest";
+                case 9923 -> "HailOfBlades";
+                default -> null;
+            };
+        }
+        
+        // Sorcery (8200)
+        if (styleId == 8200) {
+            return switch (perkId) {
+                case 8214 -> "SummonAery";
+                case 8229 -> "ArcaneComet";
+                case 8230 -> "PhaseRush";
+                default -> null;
+            };
+        }
+        
+        // Inspiration (8300)
+        if (styleId == 8300) {
+            return switch (perkId) {
+                case 8351 -> "GlacialAugment";
+                case 8360 -> "UnsealedSpellbook";
+                case 8369 -> "FirstStrike";
+                default -> null;
+            };
+        }
+        
+        // Resolve (8400)
+        if (styleId == 8400) {
+            return switch (perkId) {
+                case 8437 -> "GraspOfTheUndying";
+                case 8439 -> "Aftershock";
+                case 8465 -> "Guardian";
+                default -> null;
+            };
+        }
+        
+        return null;
+    }
+
+    /**
+     * 특정 룬이 파일명에 "Temp" 접미사가 필요한지 확인
+     * 예: LethalTempo는 LethalTempoTemp.png 사용
+     */
+    private boolean needsTempSuffix(Integer styleId, Integer perkId) {
+        if (styleId == null || perkId == null) {
+            return false;
+        }
+        
+        // Precision 스타일의 LethalTempo (8008)만 Temp 접미사 필요
+        if (styleId == 8000 && perkId == 8008) {
+            return true;
+        }
+        
+        // 다른 룬들도 필요시 여기에 추가
+        return false;
     }
 
     /**
