@@ -1,8 +1,7 @@
 package com.back.matchduo.domain.auth.dto.response;
 
-public record LoginResponse(
+public record RefreshResponse(
         AuthUserSummary user,
-        String accessToken,
-        String refreshToken
+        String accessToken
 ) {
 }

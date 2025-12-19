@@ -2,6 +2,7 @@ package com.back.matchduo.domain.auth.controller;
 
 import com.back.matchduo.domain.auth.dto.request.LoginRequest;
 import com.back.matchduo.domain.auth.dto.response.LoginResponse;
+import com.back.matchduo.domain.auth.dto.response.RefreshResponse;
 import com.back.matchduo.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,7 +41,9 @@ public class AuthController {
                                         "userId": 1,
                                         "email": "test@example.com",
                                         "nickname": "테스트유저"
-                                      }
+                                      },
+                                      "accessToken": "string",
+                                      "refreshToken": "string"
                                     }
                                     """)
                     )
@@ -69,7 +72,8 @@ public class AuthController {
                                         "userId": 1,
                                         "email": "test@example.com",
                                         "nickname": "테스트유저"
-                                      }
+                                      },
+                                      "accessToken": "string"
                                     }
                                     """)
                     )
@@ -77,7 +81,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "RefreshToken이 유효하지 않음")
     })
     @PostMapping("/refresh")
-    public LoginResponse refresh(HttpServletRequest req, HttpServletResponse res) {
+    public RefreshResponse refresh(HttpServletRequest req, HttpServletResponse res) {
         return authService.refresh(req, res);
     }
 

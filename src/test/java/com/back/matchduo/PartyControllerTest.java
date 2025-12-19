@@ -82,7 +82,6 @@ class PartyControllerTest {
                 .password("1234")
                 .nickname("파티장")
                 .verificationCode("1234")
-                .profileImage(LEADER_IMG) // ★ 실제 이미지 URL 주입
                 .build();
         userRepository.save(leaderUser);
 
@@ -92,7 +91,6 @@ class PartyControllerTest {
                 .password("1234")
                 .nickname("파티원")
                 .verificationCode("5678")
-                .profileImage(MEMBER_IMG) // ★ 실제 이미지 URL 주입
                 .build();
         userRepository.save(memberUser);
 
