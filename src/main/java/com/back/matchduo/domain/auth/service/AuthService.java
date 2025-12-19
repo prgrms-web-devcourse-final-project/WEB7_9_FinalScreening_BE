@@ -3,6 +3,7 @@ package com.back.matchduo.domain.auth.service;
 import com.back.matchduo.domain.auth.dto.request.LoginRequest;
 import com.back.matchduo.domain.auth.dto.response.AuthUserSummary;
 import com.back.matchduo.domain.auth.dto.response.LoginResponse;
+import com.back.matchduo.domain.auth.dto.response.RefreshResponse;
 import com.back.matchduo.domain.auth.refresh.entity.RefreshToken;
 import com.back.matchduo.domain.auth.refresh.repository.RefreshTokenRepository;
 import com.back.matchduo.domain.user.entity.User;
@@ -63,10 +64,14 @@ public class AuthService {
         addSetCookie(res, cookieProvider.createAccessTokenCookie(accessToken, jwtProperties.accessExpireSeconds()));
         addSetCookie(res, cookieProvider.createRefreshTokenCookie(refreshToken, jwtProperties.refreshExpireSeconds()));
 
-        return new LoginResponse(new AuthUserSummary(user.getId(), user.getEmail(), user.getNickname()));
+        return new LoginResponse(
+                new AuthUserSummary(user.getId(), user.getEmail(), user.getNickname()),
+                accessToken,
+                refreshToken
+        );
     }
 
-    public LoginResponse refresh(HttpServletRequest req, HttpServletResponse res) {
+    public RefreshResponse refresh(HttpServletRequest req, HttpServletResponse res) {
         String refreshToken = extractCookie(req, AuthCookieProvider.REFRESH_TOKEN_COOKIE);
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
@@ -93,11 +98,16 @@ public class AuthService {
         String newAccessToken = jwtProvider.createAccessToken(userId);
         addSetCookie(res, cookieProvider.createAccessTokenCookie(newAccessToken, jwtProperties.accessExpireSeconds()));
 
-        // 응답 정책: user 요약 포함(A안)
+        // 응답 정책: user 요약 포함 + accessToken만 내려줌
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.NOT_FOUND_USER));
 
-        return new LoginResponse(new AuthUserSummary(user.getId(), user.getEmail(), user.getNickname()));
+        return new RefreshResponse(
+                new AuthUserSummary(user.getId(), user.getEmail(), user.getNickname()),
+                newAccessToken
+        );
+
+        // refreshToken은 쿠키로만 유지하고, 응답 Body에는 포함하지 않는다
     }
 
     public void logout(HttpServletRequest req, HttpServletResponse res) {

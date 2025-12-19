@@ -2,14 +2,16 @@ package com.back.matchduo.domain.user.dto.request;
 
 import com.back.matchduo.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserProfileRequest(
-
         @Schema(description = "이메일", example = "user@email.com")
-                String email,
+        String email,
 
         @Schema(description = "이미지", example = "용량은 최대 10MB로 제한됩니다.")
         String profile_image,

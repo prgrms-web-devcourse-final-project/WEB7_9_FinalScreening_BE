@@ -1,5 +1,8 @@
 package com.back.matchduo.global.security.filter;
 
+import com.back.matchduo.domain.user.entity.User;
+import com.back.matchduo.domain.user.repository.UserRepository;
+import com.back.matchduo.global.security.CustomUserDetails;
 import com.back.matchduo.global.security.cookie.AuthCookieProvider;
 import com.back.matchduo.global.security.jwt.JwtProvider;
 import jakarta.servlet.FilterChain;
@@ -13,14 +16,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+    public JwtAuthenticationFilter(JwtProvider jwtProvider, UserRepository userRepository) {
         this.jwtProvider = jwtProvider;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -41,16 +45,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 토큰에서 userId 추출
                 Long userId = jwtProvider.getUserId(accessToken);
 
-                // Role 사용 안 함 → authorities 비워둠
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userId,
-                                null,
-                                List.of()
-                        );
+                // DB에서 User 조회 후 CustomUserDetails 생성
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null) {
+                    CustomUserDetails userDetails = new CustomUserDetails(user);
 
-                // SecurityContext에 인증 정보 저장
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+                    // SecurityContext에 인증 정보 저장
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
 
             } catch (Exception e) {
                 // 토큰이 잘못된 경우 인증 정보 제거
@@ -71,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .findFirst()
                 .orElse(null);
     }
-
+/*
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -90,4 +99,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // 토큰 재발급
                         (uri.equals("/api/v1/auth/refresh") && method.equals("POST"));
     }
+    */
 }
