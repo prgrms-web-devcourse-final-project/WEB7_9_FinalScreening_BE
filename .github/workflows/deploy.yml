@@ -11,7 +11,6 @@ on:
       - "Dockerfile"
     branches:
       - main
-      - feat/#4/review-api
 
 # 권한 최소화/명시화
 permissions:
@@ -109,12 +108,23 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           instance-ids: ${{ env.INSTANCE_ID }}
-          working-directory: /
+          working-directory: /home/ubuntu
           comment: Deploy
           command: |
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker stop app1 2>/dev/null || true && \
-            docker rm app1 2>/dev/null || true && \
-            docker run -d --name app1 --network common -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            
+            cat <<EOF > /home/ubuntu/application-secret.yml
+            ${{ secrets.APPLICATION_SECRET }}
+            EOF
+            
+            docker stop app1 2>/dev/null || true
+            docker rm app1 2>/dev/null || true
+            
+            docker run -d --name app1 \
+            --network common -p 8080:8080 \
+            -v /home/ubuntu/application-secret.yml:/app/application-secret.yml \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker image prune -f

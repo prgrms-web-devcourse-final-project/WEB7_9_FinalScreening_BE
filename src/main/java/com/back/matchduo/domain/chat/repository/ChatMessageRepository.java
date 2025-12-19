@@ -1,25 +1,28 @@
 package com.back.matchduo.domain.chat.repository;
 
 import com.back.matchduo.domain.chat.entity.ChatMessage;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
-    // 메시지 목록 (커서 페이징)
+    /** 커서 기반 페이징 (이전 메시지 불러오기) */
     @Query("SELECT m FROM ChatMessage m " +
-           "WHERE m.chatRoom.id = :roomId AND m.sessionNo = :sessionNo " +
-           "ORDER BY m.id DESC")
-    Page<ChatMessage> findMessages(
+            "JOIN FETCH m.sender " +
+            "WHERE m.chatRoom.id = :roomId AND m.sessionNo = :sessionNo " +
+            "AND (:cursor IS NULL OR m.id < :cursor) " +
+            "ORDER BY m.id DESC")
+    List<ChatMessage> findByCursorWithSender(
             @Param("roomId") Long roomId,
             @Param("sessionNo") Integer sessionNo,
+            @Param("cursor") Long cursor,
             Pageable pageable);
 
-    // 안 읽은 메시지 수
+    /** 안 읽은 메시지 수 */
     @Query("SELECT COUNT(m) FROM ChatMessage m " +
            "WHERE m.chatRoom.id = :roomId AND m.sessionNo = :sessionNo AND m.id > :lastReadId")
     long countUnread(
@@ -27,11 +30,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("sessionNo") Integer sessionNo,
             @Param("lastReadId") Long lastReadId);
 
-    // 마지막 메시지
-    @Query("SELECT m FROM ChatMessage m " +
-           "WHERE m.chatRoom.id = :roomId AND m.sessionNo = :sessionNo " +
-           "ORDER BY m.id DESC LIMIT 1")
-    Optional<ChatMessage> findLastMessage(
-            @Param("roomId") Long roomId,
-            @Param("sessionNo") Integer sessionNo);
+    /** 채팅방의 마지막 메시지 조회 (현재 세션) */
+    Optional<ChatMessage> findFirstByChatRoomIdAndSessionNoOrderByIdDesc(Long roomId, Integer sessionNo);
 }

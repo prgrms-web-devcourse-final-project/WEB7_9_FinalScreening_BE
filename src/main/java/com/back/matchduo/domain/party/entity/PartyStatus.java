@@ -1,6 +1,7 @@
 package com.back.matchduo.domain.party.entity;
 
 public enum PartyStatus {
-     ACTIVE, // 모집완료 시
-    CLOSED // 모집중 , 게임완료(수동, 6시간 자동 포함)
+    RECRUIT, // 모집 중 (인원이 다 안 참)
+    ACTIVE,  // 모집 완료 (인원이 다 참 -> 이때부터 6시간 타이머 시작)
+    CLOSED   // 종료 (수동 종료 or 시간 초과)
 }

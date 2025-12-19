@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     java
     id("org.springframework.boot") version "3.5.8"
@@ -57,6 +55,11 @@ dependencies {
 
     //mail
     implementation ("org.springframework.boot:spring-boot-starter-mail")
+
+    // STOMP + WebSocket
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.security:spring-security-messaging")
+
 }
 
 tasks.withType<Test> {
