@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -44,11 +46,11 @@ public class ChatMessageRead {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_read_message_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private ChatMessage lastReadMessage; // 마지막으로 읽은 메시지 포인터 (없으면 NULL)
 
     @Column(name = "last_read_at")
     private LocalDateTime lastReadAt;
-
 
     public static ChatMessageRead create(ChatRoom chatRoom, User user) {
         if (chatRoom == null || chatRoom.getId() == null) {
@@ -74,9 +76,27 @@ public class ChatMessageRead {
 
     /** 특정 메시지까지 읽음 처리 */
     public void markReadUpTo(ChatMessage message) {
+        validateMessage(message);
+        validateSameRoom(message);
+
+        if (!isCurrentSession(message) || isAlreadyRead(message)) {
+            return;
+        }
+
+        this.lastReadMessage = message;
+        this.lastReadAt = LocalDateTime.now();
+    }
+
+    private void validateMessage(ChatMessage message) {
         if (message == null || message.getId() == null) {
             throw new CustomException(CustomErrorCode.CHAT_INVALID_MESSAGE);
         }
+        if (message.getSessionNo() == null) {
+            throw new CustomException(CustomErrorCode.CHAT_INVALID_SESSION);
+        }
+    }
+
+    private void validateSameRoom(ChatMessage message) {
         if (message.getChatRoom() == null || message.getChatRoom().getId() == null) {
             throw new CustomException(CustomErrorCode.CHAT_INVALID_CHAT_ROOM);
         }
@@ -86,27 +106,20 @@ public class ChatMessageRead {
         if (!this.chatRoom.getId().equals(message.getChatRoom().getId())) {
             throw new CustomException(CustomErrorCode.CHAT_ROOM_MISMATCH);
         }
-
-        Integer messageSessionNo = message.getSessionNo();
-        if (messageSessionNo == null) {
-            throw new CustomException(CustomErrorCode.CHAT_INVALID_SESSION);
-        }
-
-        Integer currentSessionNo = this.chatRoom.getCurrentSessionNo();
-        if (currentSessionNo != null) {
-            // 현재 세션이 아닌 메시지는 읽음 반영하지 않음
-            if (!messageSessionNo.equals(currentSessionNo)) {
-                return;
-            }
-        }
-
-        if (this.lastReadMessage != null && this.lastReadMessage.getId() != null) {
-            if (this.lastReadMessage.getId() >= message.getId()) {
-                return;
-            }
-        }
-
-        this.lastReadMessage = message;
-        this.lastReadAt = LocalDateTime.now();
     }
+
+    private boolean isCurrentSession(ChatMessage message) {
+        Integer currentSessionNo = this.chatRoom.getCurrentSessionNo();
+        if (currentSessionNo == null) {
+            return false;
+        }
+        return message.getSessionNo().equals(currentSessionNo);
+    }
+
+    private boolean isAlreadyRead(ChatMessage message) {
+        return this.lastReadMessage != null
+                && this.lastReadMessage.getId() != null
+                && this.lastReadMessage.getId() > message.getId();
+    }
+
 }

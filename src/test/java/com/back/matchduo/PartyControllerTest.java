@@ -78,7 +78,7 @@ class PartyControllerTest {
                 .email("leader@test.com")
                 .password("1234")
                 .nickname("파티장")
-                .verification_code("1234")
+                .verificationCode("1234")
                 .build();
         userRepository.save(leaderUser);
 
@@ -87,7 +87,7 @@ class PartyControllerTest {
                 .email("member@test.com")
                 .password("1234")
                 .nickname("파티원")
-                .verification_code("5678")
+                .verificationCode("5678")
                 .build();
         userRepository.save(memberUser);
 
@@ -123,11 +123,11 @@ class PartyControllerTest {
 
         // 7. 초대 대상 유저 생성
         targetUser1 = User.builder()
-                .email("target1@test.com").password("1234").nickname("초대대상1").verification_code("0000").build();
+                .email("target1@test.com").password("1234").nickname("초대대상1").verificationCode("0000").build();
         userRepository.save(targetUser1);
 
         targetUser2 = User.builder()
-                .email("target2@test.com").password("1234").nickname("초대대상2").verification_code("0000").build();
+                .email("target2@test.com").password("1234").nickname("초대대상2").verificationCode("0000").build();
         userRepository.save(targetUser2);
     }
 
