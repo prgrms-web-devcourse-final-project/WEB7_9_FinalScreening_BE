@@ -33,6 +33,8 @@ public enum CustomErrorCode {
     PASSWORD_SHORTAGE(HttpStatus.BAD_REQUEST, "비밀번호 변경을 위해 모든 비밀번호 항목을 입력해야 합니다."),
     PASSWORD_INCONSISTENCY(HttpStatus.UNAUTHORIZED, "새 비밀번호가 일치하지 않습니다."),
     WRONG_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다."),
+    BAN_MYSELF(HttpStatus.BAD_REQUEST, "자신을 차단할 수 없습니다."),
+    NOT_BANNED(HttpStatus.BAD_REQUEST, "차단 내역이 없습니다."),
 
     // 3. Search (검색)
     INVALID_SEARCH_KEYWORD(HttpStatus.BAD_REQUEST, "검색어는 공백일 수 없습니다."),

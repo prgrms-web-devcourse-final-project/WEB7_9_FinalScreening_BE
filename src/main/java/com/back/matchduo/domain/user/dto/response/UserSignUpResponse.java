@@ -7,7 +7,7 @@ public record UserSignUpResponse(
         @Schema(description = "이메일", example = "user@email.com")
         String email,
 
-        @Schema(description = "비밀번호", example = "password123")
+        @Schema(description = "비밀번호", example = "password123!")
         String password,
 
         @Schema(description = "인증번호", example = "asd123")
