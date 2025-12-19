@@ -1,5 +1,7 @@
 package com.back.matchduo.domain.user.service;
 
+import com.back.matchduo.domain.auth.refresh.entity.RefreshToken;
+import com.back.matchduo.domain.auth.refresh.repository.RefreshTokenRepository;
 import com.back.matchduo.domain.user.dto.request.UserLoginRequest;
 import com.back.matchduo.domain.user.dto.response.UserLoginResponse;
 import com.back.matchduo.domain.user.entity.User;
@@ -28,7 +30,6 @@ public class UserLoginService {
             throw new CustomException(CustomErrorCode.WRONG_PASSWORD);
         }
 
-        //로그인 성공
         return new UserLoginResponse(
                 user.getId(),
                 user.getEmail()

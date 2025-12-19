@@ -1,6 +1,7 @@
 package com.back.matchduo.domain.party.repository;
 
 import com.back.matchduo.domain.party.entity.PartyMember;
+import com.back.matchduo.domain.party.entity.PartyMemberState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +34,5 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
     long countByParty_PostId(Long postId);
     List<PartyMember> findAllByParty_PostId(Long postId);
 
+    int countByPartyIdAndState(Long partyId, PartyMemberState partyMemberState);
 }

@@ -33,6 +33,11 @@ public enum CustomErrorCode {
     PASSWORD_SHORTAGE(HttpStatus.BAD_REQUEST, "비밀번호 변경을 위해 모든 비밀번호 항목을 입력해야 합니다."),
     PASSWORD_INCONSISTENCY(HttpStatus.UNAUTHORIZED, "새 비밀번호가 일치하지 않습니다."),
     WRONG_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다."),
+    BAN_MYSELF(HttpStatus.BAD_REQUEST, "자신을 차단할 수 없습니다."),
+    NOT_BANNED(HttpStatus.BAD_REQUEST, "차단 내역이 없습니다."),
+
+    // 3. Search (검색)
+    INVALID_SEARCH_KEYWORD(HttpStatus.BAD_REQUEST, "검색어는 공백일 수 없습니다."),
 
     // 3. Party (파티)
     PARTY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 파티를 찾을 수 없습니다."),
@@ -56,11 +61,13 @@ public enum CustomErrorCode {
     INVALID_POST_MEMO(HttpStatus.BAD_REQUEST, "모집 내용은 1~50자이며 공백만 입력할 수 없습니다."),
     INVALID_LOOKING_POSITIONS(HttpStatus.BAD_REQUEST, "찾는 포지션 선택이 올바르지 않습니다."),
     INVALID_POST_STATUS_UPDATE(HttpStatus.BAD_REQUEST, "상태 변경은 FINISHED만 요청할 수 있습니다."),
+    POST_ID_REQUIRED(HttpStatus.BAD_REQUEST, "postId는 필수입니다."),
 
 
     // 5. Chat (채팅)
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
     CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "종료된 채팅방에는 메시지를 보낼 수 없습니다."),
+    CHAT_ROOM_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "이미 열려있는 채팅방입니다."),
     CHAT_SAME_SENDER_RECEIVER(HttpStatus.BAD_REQUEST, "채팅방의 sender와 receiver는 동일할 수 없습니다."),
     CHAT_INVALID_USER_ID(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 ID입니다."),
     CHAT_INVALID_CHAT_ROOM(HttpStatus.BAD_REQUEST, "채팅방 정보가 올바르지 않습니다."),
@@ -72,6 +79,7 @@ public enum CustomErrorCode {
     CHAT_INVALID_SESSION(HttpStatus.BAD_REQUEST, "메시지의 세션 정보가 올바르지 않습니다."),
     CHAT_READ_STATE_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "읽음 상태의 채팅방 정보가 올바르지 않습니다."),
     CHAT_USER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "해당 채팅방의 참여자가 아닙니다."),
+    CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅 메시지를 찾을 수 없습니다"),
 
     // 6. GameAccount (게임 계정)
     GAME_ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "게임 계정을 찾을 수 없습니다."),

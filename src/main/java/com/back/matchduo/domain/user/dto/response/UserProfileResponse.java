@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserProfileResponse(
+        @Schema(description = "유저 ID", example = "1")
+        Long id,
+
         @Schema(description = "이메일", example = "user@email.com")
         String email,
 
@@ -27,6 +30,7 @@ public record UserProfileResponse(
 ) {
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
+                user.getId(),
                 user.getEmail(),
                 user.getProfileImage(),
                 user.getNickname(),

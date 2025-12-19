@@ -17,7 +17,15 @@ public class AuthPrincipal {
             throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
         }
 
-        return (Long) authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).getId();
+        } else if (principal instanceof Long) {
+            return (Long) principal;
+        }
+
+        throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
     }
 }
 

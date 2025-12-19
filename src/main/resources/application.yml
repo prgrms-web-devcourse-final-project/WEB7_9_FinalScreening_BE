@@ -12,6 +12,8 @@ spring:
       auto-commit: false
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: update  # 15,16추가
     properties:
       hibernate:
         format_sql: true
@@ -22,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: skang000316@gmail.com
+    password: akaegfgyurdezikp
     properties:
       mail:
         smtp:
