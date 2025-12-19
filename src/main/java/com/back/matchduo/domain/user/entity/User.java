@@ -1,6 +1,5 @@
 package com.back.matchduo.domain.user.entity;
 
-import com.back.matchduo.domain.auth.refresh.entity.RefreshToken;
 import com.back.matchduo.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
