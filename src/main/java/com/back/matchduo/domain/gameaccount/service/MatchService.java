@@ -41,6 +41,9 @@ public class MatchService {
     private final ObjectMapper objectMapper;
 
     private static final int DEFAULT_MATCH_COUNT = 20;
+    
+    // 허용된 큐 ID 목록 (랭크 게임: 400=솔로랭크, 420=자유랭크, 430=일반, 440=자유랭크, 450=칼바람)
+    private static final List<Integer> ALLOWED_QUEUE_IDS = List.of(400, 420, 430, 440, 450);
 
     /**
      * 전적 갱신 (Riot API 호출 → DB 저장)
@@ -81,6 +84,13 @@ public class MatchService {
             try {
                 // 매치 상세 정보 조회
                 RiotApiDto.MatchResponse matchResponse = riotApiClient.getMatchByMatchId(matchId);
+                
+                // QueueId 필터링 (400, 420, 430, 440, 450만 허용)
+                Integer queueId = matchResponse.getInfo().getQueueId();
+                if (queueId == null || !ALLOWED_QUEUE_IDS.contains(queueId)) {
+                    log.debug("허용되지 않은 큐 ID: matchId={}, queueId={}", matchId, queueId);
+                    continue;  // 스킵
+                }
                 
                 // 중복 체크
                 if (matchRepository.existsByRiotMatchIdAndGameAccount_GameAccountId(matchId, gameAccountId)) {
@@ -365,7 +375,7 @@ public class MatchService {
             
             List<String> imageUrls = new ArrayList<>();
             
-            // 주 룬 스타일의 메인 룬 이미지 (예: 정복자)
+            // 주 룬 스타일의 메인 룬 이미지
             if (perks.getStyles() != null && !perks.getStyles().isEmpty()) {
                 RiotApiDto.MatchResponse.Participant.Perks.PerkStyle primaryStyle = perks.getStyles().get(0);
                 if (primaryStyle != null 
@@ -374,11 +384,11 @@ public class MatchService {
                         && !primaryStyle.getSelections().isEmpty()) {
                     Integer primaryPerk = primaryStyle.getSelections().get(0).getPerk();
                     if (primaryPerk != null) {
-                        // 주 룬 메인 룬 이미지 URL 생성 (이름 기반 URL 형식)
+                        // 주 룬 메인 룬 이미지 URL 생성
                         String styleName = getStyleName(primaryStyle.getStyle());
                         String perkName = getPerkName(primaryStyle.getStyle(), primaryPerk);
                         if (styleName != null && perkName != null) {
-                            // 특정 룬은 파일명에 "Temp" 접미사 필요 (예: LethalTempo)
+                            // 특정 룬은 파일명에 "Temp" 접미사 필요
                             String fileName = needsTempSuffix(primaryStyle.getStyle(), primaryPerk) 
                                     ? perkName + "Temp" 
                                     : perkName;
@@ -391,11 +401,11 @@ public class MatchService {
                 }
             }
             
-            // 부 룬 스타일 이미지 (예: Precision 스타일 이미지)
+            // 부 룬 스타일 이미지
             if (perks.getStyles() != null && perks.getStyles().size() > 1) {
                 RiotApiDto.MatchResponse.Participant.Perks.PerkStyle subStyle = perks.getStyles().get(1);
                 if (subStyle != null && subStyle.getStyle() != null) {
-                    // 부 룬 스타일 이미지 URL 생성 (예: 7201_Precision.png)
+                    // 부 룬 스타일 이미지 URL 생성
                     String subStyleName = getSubStyleName(subStyle.getStyle());
                     Integer subStyleImageId = getSubStyleImageId(subStyle.getStyle());
                     if (subStyleName != null && subStyleImageId != null) {
@@ -407,7 +417,7 @@ public class MatchService {
                 }
             }
             
-            // 최대 2개의 이미지만 반환 (주 룬 1개 + 부 룬 1개)
+            // 최대 2개의 이미지만 반환
             return imageUrls.size() > 2 ? imageUrls.subList(0, 2) : imageUrls;
         } catch (JsonProcessingException e) {
             log.warn("룬 정보 JSON 파싱 실패: {}", e.getMessage());
@@ -536,7 +546,7 @@ public class MatchService {
         // 달 단위 계산
         long monthsAgo = ChronoUnit.MONTHS.between(gameDateTime, nowDateTime);
         
-        // 한달 이상: "1개월 전", "2개월 전", "3개월 전" 등
+        // 한달 이상
         if (monthsAgo < 12) {
             return monthsAgo + "개월 전";
         } else {
