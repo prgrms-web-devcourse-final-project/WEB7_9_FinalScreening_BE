@@ -34,6 +34,9 @@ public enum CustomErrorCode {
     PASSWORD_INCONSISTENCY(HttpStatus.UNAUTHORIZED, "새 비밀번호가 일치하지 않습니다."),
     WRONG_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다."),
 
+    // 3. Search (검색)
+    INVALID_SEARCH_KEYWORD(HttpStatus.BAD_REQUEST, "검색어는 공백일 수 없습니다."),
+
     // 3. Party (파티)
     PARTY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 파티를 찾을 수 없습니다."),
     PARTY_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "이미 종료된 파티입니다."),
