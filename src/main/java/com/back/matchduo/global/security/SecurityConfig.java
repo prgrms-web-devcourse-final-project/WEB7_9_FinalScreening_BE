@@ -56,7 +56,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/error"
+                                "/error",
+                                "/actuator/**"
                         ).permitAll()
 
                         //Swagger 허용
