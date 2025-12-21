@@ -112,7 +112,7 @@ jobs:
           working-directory: /home/ubuntu
           comment: Deploy
           command: |
-            # 1. 변수 설정
+            # 변수 설정
             IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
             NETWORK="common"
             HEALTH_ENDPOINT="/actuator/health"
@@ -125,7 +125,7 @@ jobs:
             ${{ secrets.APPLICATION_SECRET }}
             EOF
             
-            # 2. 현재 실행 중인 컨테이너 확인
+            # 현재 실행 중인 컨테이너 확인
             if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
               CURRENT="app1_1"
               NEXT="app1_2"
@@ -136,7 +136,7 @@ jobs:
               NEXT_PORT=8080 # 헬스체크용 외부포트
             fi
             
-            # 3. 신규 컨테이너 실행 (app1_1 또는 app1_2 이름 유지)
+            # 신규 컨테이너 실행 (app1_1 또는 app1_2 이름 유지)
             docker stop "$NEXT" 2>/dev/null || true
             docker rm "$NEXT" 2>/dev/null || true
             
@@ -148,7 +148,7 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               "$IMAGE"
             
-            # 4. 헬스 체크 (중요: HAProxy가 감지할 시간을 줘야 함)
+            # 헬스 체크 (중요: HAProxy가 감지할 시간을 줘야 함)
             echo ">>> $NEXT 헬스체크 시작..."
             START_TIME=$(date +%s)
             while true; do
@@ -166,7 +166,13 @@ jobs:
               sleep 5
             done
             
-            # 5. 기존 컨테이너 종료 (스위칭 완료)
+            # 설정 파일 내의 포트 번호를 동적으로 변경하고 리로드합니다.
+            if command -v haproxy &> /dev/null; then
+              sudo sed -i "s/127.0.0.1:$CURRENT_PORT/127.0.0.1:$NEXT_PORT/g" /etc/haproxy/haproxy.cfg
+              sudo systemctl reload haproxy
+              echo "✅ HAProxy 트래픽 전환 완료: $NEXT_PORT"
+            fi
+            
             # HAProxy가 NEXT를 잡은 후 CURRENT를 꺼야 끊김이 없습니다.
             docker stop "$CURRENT" 2>/dev/null || true
             docker rm "$CURRENT" 2>/dev/null || true
