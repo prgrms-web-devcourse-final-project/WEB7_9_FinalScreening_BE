@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.party.service;
 
+import com.back.matchduo.domain.chat.repository.ChatRoomRepository;
 import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
 import com.back.matchduo.domain.party.dto.response.*;
 import com.back.matchduo.domain.party.entity.*;
@@ -30,6 +31,7 @@ public class PartyService {
     private final PartyMemberRepository partyMemberRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public PartyByPostResponse getPartyByPostId(Long postId, Long currentUserId) {
         // 1. 파티 정보 조회
@@ -87,7 +89,22 @@ public class PartyService {
                 memberDtos
         );
     }
+    @Transactional(readOnly = true)
+    public List<ChatCandidateResponse> getChatCandidates(Long postId, Long currentUserId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
 
+        if (!post.getUser().getId().equals(currentUserId)) {
+            throw new CustomException(CustomErrorCode.NOT_PARTY_LEADER);
+        }
+
+        List<User> candidates = chatRoomRepository.findCandidateUsers(postId, currentUserId);
+
+        // 3. DTO 변환
+        return candidates.stream()
+                .map(ChatCandidateResponse::from)
+                .collect(Collectors.toList());
+    }
 
     // 파티원 추가
     @Transactional

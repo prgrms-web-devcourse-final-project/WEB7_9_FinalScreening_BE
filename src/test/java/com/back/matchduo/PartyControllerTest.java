@@ -1,5 +1,7 @@
 package com.back.matchduo;
 
+import com.back.matchduo.domain.chat.entity.ChatRoom;
+import com.back.matchduo.domain.chat.repository.ChatRoomRepository;
 import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.repository.GameModeRepository;
 import com.back.matchduo.domain.party.controller.PartyController;
@@ -62,6 +64,9 @@ class PartyControllerTest {
     @Autowired
     private GameModeRepository gameModeRepository;
 
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
+
     private Long testPostId;
     private User leaderUser;
     private User memberUser;
@@ -71,8 +76,9 @@ class PartyControllerTest {
     private PartyMember leaderMember;
     private PartyMember normalMember;
 
-    private static final String LEADER_IMG = "https://test.com/leader.png";
-    private static final String MEMBER_IMG = "https://test.com/member.png";
+
+    private static final String LEADER_IMG = "https://opgg-static.akamaized.net/meta/images/profile_icons/profileIcon1.jpg";
+    private static final String MEMBER_IMG = "https://opgg-static.akamaized.net/meta/images/profile_icons/profileIcon1.jpg";
 
     @BeforeAll
     void setUp() {
@@ -549,6 +555,103 @@ class PartyControllerTest {
             resultActions
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value("PARTY_ALREADY_CLOSED"))
+                    .andDo(print());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("파티 영입 후보 조회 API")
+    class GetChatCandidates {
+
+        @Test
+        @DisplayName("성공: 채팅을 걸었지만 아직 파티원이 아닌 유저만 조회된다")
+        void success() throws Exception {
+            // given
+            // 1. 테스트를 위해 Post 엔티티를 다시 조회 (setUp에서 만든 모집글)
+            Post savedPost = postRepository.findById(testPostId).orElseThrow();
+
+            // 2. [상황 설정]
+            // - targetUser1: 채팅을 걸었고, 파티원이 아님 -> (O) 조회 되어야 함
+            // - memberUser: 채팅을 걸었지만, 이미 파티원임 -> (X) 조회 되면 안 됨
+            // - targetUser2: 채팅을 건 적이 없음 -> (X) 조회 되면 안 됨
+
+            // ChatRoom 데이터 생성 (Entity의 create 메서드 활용 가정)
+            // ChatRoom.create(post, receiver(방장), sender(지원자))
+            ChatRoom chat1 = ChatRoom.create(savedPost, leaderUser, targetUser1);
+            chatRoomRepository.save(chat1);
+
+            ChatRoom chat2 = ChatRoom.create(savedPost, leaderUser, memberUser);
+            chatRoomRepository.save(chat2);
+
+            // when
+            ResultActions resultActions = mockMvc.perform(
+                    get("/api/v1/posts/{postId}/candidates", testPostId)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .with(user(new CustomUserDetails(leaderUser))) // 파티장 권한
+            );
+
+            // then
+            resultActions
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("영입 후보 목록을 조회했습니다."))
+                    .andExpect(jsonPath("$.data.size()").value(1)) // targetUser1 한 명만 나와야 함
+                    .andExpect(jsonPath("$.data[0].userId").value(targetUser1.getId()))
+                    .andExpect(jsonPath("$.data[0].nickname").value("초대대상1"))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("실패: 파티장이 아닌 유저가 API를 호출하면 '권한 없음(NOT_PARTY_LEADER)' 에러가 발생한다")
+        void fail_not_leader() throws Exception {
+            // given
+            Post savedPost = postRepository.findById(testPostId).orElseThrow();
+
+
+            // when
+            ResultActions resultActions = mockMvc.perform(
+                    get("/api/v1/posts/{postId}/candidates", savedPost.getId())
+                            .accept(MediaType.APPLICATION_JSON)
+                            .with(user(new CustomUserDetails(memberUser))) // 👈 일반 유저 로그인
+            );
+
+            // then
+            resultActions
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value("NOT_PARTY_LEADER"))
+                    .andExpect(jsonPath("$.message").value("파티장만 접근할 수 있는 권한입니다."))
+                    .andDo(print());
+        }
+
+        @Test
+        @DisplayName("성공: 채팅을 건 사람이 아무도 없으면 빈 리스트 반환")
+        void success_empty() throws Exception {
+            // given
+            // 새로운 모집글 생성 (채팅 기록 없음)
+            Post newPost = Post.builder()
+                    .user(leaderUser)
+                    .gameMode(gameModeRepository.findAll().get(0))
+                    .queueType(QueueType.DUO)
+                    .myPosition(Position.ADC)
+                    .lookingPositions("[\"SUPPORT\"]")
+                    .mic(true)
+                    .recruitCount(2)
+                    .memo("새로운 글")
+                    .build();
+            postRepository.save(newPost);
+
+            // when
+            ResultActions resultActions = mockMvc.perform(
+                    get("/api/v1/posts/{postId}/candidates", newPost.getId())
+                            .accept(MediaType.APPLICATION_JSON)
+                            .with(user(new CustomUserDetails(leaderUser)))
+            );
+
+            // then
+            resultActions
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty()) // 빈 배열 확인
                     .andDo(print());
         }
     }

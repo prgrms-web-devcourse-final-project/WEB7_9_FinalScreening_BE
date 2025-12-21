@@ -51,7 +51,7 @@ public class UserProfileService {
             user.setProfile_image(request.profile_image());
         }
 
-        // 🔹 비밀번호 처리
+        //비밀번호 처리
         handlePassword(user, request);
     }
 

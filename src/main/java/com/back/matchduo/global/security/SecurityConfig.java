@@ -53,6 +53,12 @@ public class SecurityConfig {
 
                 // 인가 규칙
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/error"
+                        ).permitAll()
+
                         //Swagger 허용
                         .requestMatchers(
                                 "/swagger-ui/**",
