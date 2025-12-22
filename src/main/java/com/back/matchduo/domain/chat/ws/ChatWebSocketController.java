@@ -19,7 +19,7 @@ import java.security.Principal;
 
 /**
  * WebSocket 채팅 메시지
- * - /pub/chats/{chatId}/messages -> 메시지 수신 후 /sub/chats/{chatId}로 브로드캐스트
+ * - /pub/chats/{chatRoomId}/messages -> 메시지 수신 후 /sub/chats/{chatRoomId}로 브로드캐스트
  */
 @Slf4j
 @Controller
@@ -30,9 +30,9 @@ public class ChatWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
 
     /** WebSocket으로 메시지 전송 및 브로드캐스트 */
-    @MessageMapping("/chats/{chatId}/messages")
+    @MessageMapping("/chats/{chatRoomId}/messages")
     public void sendMessage(
-            @DestinationVariable Long chatId,
+            @DestinationVariable Long chatRoomId,
             @Payload ChatMessageSendRequest request,
             Principal principal
     ) {
@@ -40,14 +40,14 @@ public class ChatWebSocketController {
 
         // 메시지 저장
         ChatMessage message = chatMessageService.send(
-                chatId, userId, request.messageType(), request.content());
+                chatRoomId, userId, request.messageType(), request.content());
 
         ChatMessageSendResponse response = ChatMessageSendResponse.of(message);
 
         // 해당 채팅방 구독자들에게 브로드캐스트
-        messagingTemplate.convertAndSend("/sub/chats/" + chatId, response);
+        messagingTemplate.convertAndSend("/sub/chats/" + chatRoomId, response);
 
-        log.debug("WebSocket 메시지 전송: chatId={}, senderId={}", chatId, userId);
+        log.debug("WebSocket 메시지 전송: chatRoomId={}, senderId={}", chatRoomId, userId);
     }
 
     private Long extractUserId(Principal principal) {

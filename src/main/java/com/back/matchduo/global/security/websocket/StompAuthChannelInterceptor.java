@@ -106,15 +106,15 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         Long userId = (Long) auth.getPrincipal();
-        Long chatId = Long.parseLong(matcher.group(1));
+        Long chatRoomId = Long.parseLong(matcher.group(1));
 
         // 채팅방 멤버 검증
-        boolean isMember = chatRoomRepository.existsByIdAndMember(chatId, userId);
+        boolean isMember = chatRoomRepository.existsByIdAndMember(chatRoomId, userId);
         if (!isMember) {
-            log.warn("WebSocket 구독 실패: 채팅방 멤버 아님 - chatId={}, userId={}", chatId, userId);
+            log.warn("WebSocket 구독 실패: 채팅방 멤버 아님 - chatRoomId={}, userId={}", chatRoomId, userId);
             throw new MessageDeliveryException("채팅방에 접근 권한이 없습니다.");
         }
 
-        log.debug("WebSocket 구독 성공: chatId={}, userId={}", chatId, userId);
+        log.debug("WebSocket 구독 성공: chatRoomId={}, userId={}", chatRoomId, userId);
     }
 }
