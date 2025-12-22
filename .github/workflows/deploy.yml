@@ -120,6 +120,7 @@ jobs:
             
             # 이미지 풀 및 비밀번호 생성 (이전과 동일)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker rmi -f "$IMAGE" || true
             docker pull "$IMAGE"
             cat <<'EOF' > /home/ubuntu/application-secret.yml
             ${{ secrets.APPLICATION_SECRET }}
@@ -171,7 +172,7 @@ jobs:
             
             # 설정 파일 내의 포트 번호를 동적으로 변경하고 리로드합니다.
             if command -v haproxy &> /dev/null; then
-              sudo sed -i "s/127.0.0.1:$CURRENT_PORT/127.0.0.1:$NEXT_PORT/g" /etc/haproxy/haproxy.cfg
+              sudo sed -i "s/127.0.0.1:$CURRENT_PORT\b/127.0.0.1:$NEXT_PORT/g" /etc/haproxy/haproxy.cfg
               sudo systemctl reload haproxy
               echo "✅ HAProxy 트래픽 전환 완료: $NEXT_PORT"
             fi
