@@ -13,7 +13,10 @@ public record OtherProfileResponse(
         String profile_image,
 
         @Schema(description = "자기소개", example = "인간시대의 끝이 도래했다")
-        String comment
+        String comment,
+
+        @Schema(description = "게임 계정 고유 ID", example = "123")
+        Long gameAccountId
 ) {
 
 }

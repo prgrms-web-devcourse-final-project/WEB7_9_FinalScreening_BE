@@ -2,7 +2,9 @@ package com.back.matchduo.domain.user.service;
 
 import com.back.matchduo.domain.user.dto.request.UserProfileRequest;
 import com.back.matchduo.domain.user.dto.request.UserUpdateRequest;
+import com.back.matchduo.domain.user.dto.response.UserProfileResponse;
 import com.back.matchduo.domain.user.entity.User;
+import com.back.matchduo.domain.user.repository.UserRepository;
 import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
 import jakarta.transaction.Transactional;
@@ -21,9 +23,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 public class UserProfileService {
+    private final UserRepository userRepository;
+    private final FileService fileService;
+
     //프로필 조회
-    public UserProfileRequest getProfile(User user) {
-        return new UserProfileRequest(
+    public UserProfileResponse getProfile(User user) {
+        return new UserProfileResponse(
+                user.getId(),
                 user.getEmail(),
                 user.getProfileImage(),
                 user.getNickname(),
@@ -51,7 +57,7 @@ public class UserProfileService {
             user.setProfile_image(request.profile_image());
         }
 
-        // 🔹 비밀번호 처리
+        //비밀번호 처리
         handlePassword(user, request);
     }
 
@@ -103,21 +109,15 @@ public class UserProfileService {
     }
 
     // 이미지 업로드
-    private void updateProfileImage(User user, MultipartFile file) {
-        if (file.getSize() > 10 * 1024 * 1024) { // 10MB 제한
-            throw new IllegalArgumentException("이미지 파일은 최대 10MB까지 업로드 가능합니다.");
-        }
-        Path uploadDir = Paths.get("upload/profile/"); // 업로드 폴더 경로 지정
-        try {
-            Files.createDirectories(uploadDir); // 폴더 생성
+    @Transactional
+    public void updateProfileImage(User user, MultipartFile file) {
+        // 1. 파일 저장 및 웹 URL 경로 생성 (/images/uuid_파일명.png)
+        String savedPath = fileService.upload(file);
 
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            File dest = uploadDir.resolve(fileName).toFile(); // Path → File 변환
-            file.transferTo(dest); // transferTo(File)
+        // 2. DB 업데이트 (영속성 컨텍스트 활용)
+        User currentUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new CustomException(CustomErrorCode.NOT_FOUND_USER));
 
-            user.setProfile_image("/upload/profile/" + fileName);
-        } catch (IOException e) {
-            throw new RuntimeException("파일 저장 실패", e);
-        }
+        currentUser.updateProfileImage(savedPath);
     }
 }

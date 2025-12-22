@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "users")
+@Table(name = "user")
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,6 +64,10 @@ public class User extends BaseEntity {
     }
 
     public void setProfile_image(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }
 }

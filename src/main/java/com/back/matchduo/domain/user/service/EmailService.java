@@ -11,6 +11,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -25,6 +26,9 @@ public class EmailService {
 
     private final VerificationRepository verificationRepository;
     private final JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     // 인증번호 생성 + 저장 + 이메일 발송
     @Transactional
@@ -54,9 +58,10 @@ public class EmailService {
 
     // 이메일 비동기 전송
     @Async("mailExecutor")
-    void sendVerificationMailAsync(String email, String code) {
+    public void sendVerificationMailAsync(String email, String code) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
             message.setTo(email);
             message.setSubject("[MatchDuo] 이메일 인증 코드");
             message.setText("""
