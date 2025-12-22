@@ -9,6 +9,14 @@ spring:
       host: redis_1
       port: ${REDIS_PORT}
       password: "${REDIS_PW}"
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
   datasource:
     url: jdbc:mysql://mysql_1:3306/${DB_NAME}
