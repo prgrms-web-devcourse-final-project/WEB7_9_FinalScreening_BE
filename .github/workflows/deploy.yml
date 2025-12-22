@@ -29,12 +29,12 @@ jobs:
         id: create_tag
         uses: mathieudutour/github-tag-action@v6.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.MY_GHCR_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MY_GHCR_TOKEN: ${{ secrets.MY_GHCR_TOKEN }}
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           release_name: Release ${{ steps.create_tag.outputs.new_tag }}
@@ -63,7 +63,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.MY_GHCR_TOKEN }}
 
       - name: set lower case owner name
         id: export_owner
@@ -119,8 +119,8 @@ jobs:
             TIMEOUT=60
             
             # 이미지 풀 및 비밀번호 생성 (이전과 동일)
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull "$IMAGE"
+            echo "${{ secrets.MY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            docker pull "$IMAGE" || { echo "❌ 이미지 풀 실패"; exit 1; }
             
             cat <<'EOF' > /home/ubuntu/application-secret.yml
             ${{ secrets.APPLICATION_SECRET }}
@@ -149,7 +149,7 @@ jobs:
               -p "$NEXT_PORT":8080 \
               -v /home/ubuntu/application-secret.yml:/app/application-secret.yml \
               -e SPRING_PROFILES_ACTIVE=prod \
-              "$IMAGE"
+              "$IMAGE" || { echo "❌ 컨테이너 실행 실패"; exit 1; }
             
             # 헬스 체크 (중요: HAProxy가 감지할 시간을 줘야 함)
             echo ">>> $NEXT 헬스체크 시작..."
