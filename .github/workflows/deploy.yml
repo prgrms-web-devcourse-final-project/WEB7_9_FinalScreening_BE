@@ -116,7 +116,7 @@ jobs:
             IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
             NETWORK="common"
             HEALTH_ENDPOINT="/actuator/health"
-            TIMEOUT=60
+            TIMEOUT=120
             
             # 이미지 풀 및 비밀번호 생성 (이전과 동일)
             echo "${{ secrets.MY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
@@ -163,6 +163,8 @@ jobs:
               fi
             
               if [ $(( $(date +%s) - START_TIME )) -ge $TIMEOUT ]; then
+                echo "❌ 헬스체크 타임아웃! 컨테이너 로그를 출력합니다:"
+                docker logs "$NEXT"  # 실패 원인을 알기 위해 로그 출력 추가
                 docker stop "$NEXT" && docker rm "$NEXT"
                 exit 1
               fi
