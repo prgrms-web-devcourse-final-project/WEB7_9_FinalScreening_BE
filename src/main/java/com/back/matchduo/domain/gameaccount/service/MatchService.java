@@ -2,11 +2,14 @@ package com.back.matchduo.domain.gameaccount.service;
 
 import com.back.matchduo.domain.gameaccount.client.RiotApiClient;
 import com.back.matchduo.domain.gameaccount.dto.RiotApiDto;
+import com.back.matchduo.domain.gameaccount.dto.response.FavoriteChampionResponse;
 import com.back.matchduo.domain.gameaccount.dto.response.MatchResponse;
 import java.util.ArrayList;
+import com.back.matchduo.domain.gameaccount.entity.FavoriteChampion;
 import com.back.matchduo.domain.gameaccount.entity.GameAccount;
 import com.back.matchduo.domain.gameaccount.entity.Match;
 import com.back.matchduo.domain.gameaccount.entity.MatchParticipant;
+import com.back.matchduo.domain.gameaccount.repository.FavoriteChampionRepository;
 import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.gameaccount.repository.MatchParticipantRepository;
 import com.back.matchduo.domain.gameaccount.repository.MatchRepository;
@@ -24,7 +27,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +41,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final MatchParticipantRepository matchParticipantRepository;
     private final GameAccountRepository gameAccountRepository;
+    private final FavoriteChampionRepository favoriteChampionRepository;
     private final RiotApiClient riotApiClient;
     private final DataDragonService dataDragonService;
     private final ObjectMapper objectMapper;
@@ -164,6 +170,21 @@ public class MatchService {
         log.info("매치 정보 갱신 완료: gameAccountId={}, 요청자 userId={}, 저장된 매치 개수={}", 
                 gameAccountId, userId, savedCount);
 
+        // 매치 데이터를 DB에 반영 (flush) - 같은 트랜잭션 내에서 선호 챔피언 계산을 위해
+        matchRepository.flush();
+        matchParticipantRepository.flush();
+
+        // 선호 챔피언 TOP 3 계산 및 저장 (같은 트랜잭션에서 실행하여 저장된 매치 데이터를 즉시 사용 가능)
+        // 예외 발생 시에도 메인 트랜잭션에 영향을 주지 않도록 try-catch로 처리
+        try {
+            calculateAndSaveFavoriteChampions(gameAccountId);
+            log.debug("선호 챔피언 계산 및 저장 성공: gameAccountId={}", gameAccountId);
+        } catch (Exception e) {
+            log.error("선호 챔피언 계산 및 저장 실패: gameAccountId={}, error={}, exceptionType={}", 
+                    gameAccountId, e.getMessage(), e.getClass().getName(), e);
+            // 선호 챔피언 저장 실패해도 전적 갱신은 성공으로 처리
+        }
+
         // 저장된 매치 정보 조회하여 반환
         return getRecentMatches(gameAccountId, userId, count);
     }
@@ -181,6 +202,10 @@ public class MatchService {
         // Match 삭제
         matchRepository.deleteByGameAccount_GameAccountId(gameAccountId);
         log.info("매치 정보 삭제 완료: gameAccountId={}", gameAccountId);
+        
+        // 선호 챔피언 삭제
+        favoriteChampionRepository.deleteByGameAccount_GameAccountId(gameAccountId);
+        log.info("선호 챔피언 정보 삭제 완료: gameAccountId={}", gameAccountId);
     }
 
     /**
@@ -603,6 +628,190 @@ public class MatchService {
         } else {
             return String.format("%d초", seconds);
         }
+    }
+
+    /**
+     * 선호 챔피언 TOP 3 계산 및 저장
+     * 최근 20게임 기준으로 가장 많이 사용된 챔피언 TOP 3를 계산하여 DB에 저장
+     * @param gameAccountId 게임 계정 ID
+     */
+    private void calculateAndSaveFavoriteChampions(Long gameAccountId) {
+        // 게임 계정 조회
+        GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
+
+        // 최근 20게임 조회
+        List<Match> matches = matchRepository.findByGameAccount_GameAccountIdOrderByGameStartTimestampDesc(gameAccountId);
+        
+        // 현재 puuid와 일치하는 매치만 필터링
+        String currentPuuid = gameAccount.getPuuid();
+        List<Match> filteredMatches = matches.stream()
+                .filter(match -> {
+                    MatchParticipant participant = matchParticipantRepository.findByMatch_MatchId(match.getMatchId())
+                            .orElse(null);
+                    if (participant == null) {
+                        return false;
+                    }
+                    String participantPuuid = participant.getPuuid();
+                    return participantPuuid != null && participantPuuid.equals(currentPuuid);
+                })
+                .limit(20)  // 최근 20게임만 사용
+                .collect(Collectors.toList());
+
+        if (filteredMatches.isEmpty()) {
+            log.debug("선호 챔피언 계산: 매치 데이터가 없습니다. gameAccountId={}", gameAccountId);
+            // 기존 데이터 삭제
+            favoriteChampionRepository.deleteByGameAccount_GameAccountId(gameAccountId);
+            return;
+        }
+
+        // 챔피언별 통계 집계
+        Map<String, ChampionStats> championStatsMap = new HashMap<>();
+        
+        for (Match match : filteredMatches) {
+            MatchParticipant participant = matchParticipantRepository.findByMatch_MatchId(match.getMatchId())
+                    .orElse(null);
+            if (participant == null) {
+                continue;
+            }
+
+            String championKey = participant.getChampionId() + "_" + participant.getChampionName();
+            ChampionStats stats = championStatsMap.computeIfAbsent(championKey, 
+                    k -> new ChampionStats(participant.getChampionId(), participant.getChampionName()));
+            
+            stats.totalGames++;
+            if (match.getWin()) {
+                stats.wins++;
+            } else {
+                stats.losses++;
+            }
+        }
+
+        // 정렬: 게임 수 내림차순 → 동률 시 승률 내림차순
+        List<ChampionStats> sortedStats = championStatsMap.values().stream()
+                .sorted((a, b) -> {
+                    int gameCompare = Integer.compare(b.totalGames, a.totalGames);
+                    if (gameCompare != 0) {
+                        return gameCompare;
+                    }
+                    return Double.compare(b.getWinRate(), a.getWinRate());
+                })
+                .limit(3)  // TOP 3만
+                .collect(Collectors.toList());
+
+        // 기존 데이터 조회 (rank별로 Map 생성)
+        List<FavoriteChampion> existingChampions = favoriteChampionRepository
+                .findByGameAccount_GameAccountIdOrderByRankAsc(gameAccountId);
+        Map<Integer, FavoriteChampion> existingChampionsByRank = existingChampions.stream()
+                .collect(Collectors.toMap(FavoriteChampion::getRank, fc -> fc));
+
+        // 새로 계산된 TOP 3에 대해 업데이트 또는 생성
+        for (int i = 0; i < sortedStats.size(); i++) {
+            int rank = i + 1;
+            ChampionStats stats = sortedStats.get(i);
+            
+            FavoriteChampion favoriteChampion = existingChampionsByRank.get(rank);
+            if (favoriteChampion != null) {
+                // 기존 데이터 업데이트
+                favoriteChampion.update(
+                        stats.championId,
+                        stats.championName,
+                        stats.totalGames,
+                        stats.wins,
+                        stats.losses,
+                        stats.getWinRate()
+                );
+                favoriteChampionRepository.save(favoriteChampion);
+            } else {
+                // 새 데이터 생성
+                FavoriteChampion newChampion = FavoriteChampion.builder()
+                        .gameAccount(gameAccount)
+                        .rank(rank)
+                        .championId(stats.championId)
+                        .championName(stats.championName)
+                        .totalGames(stats.totalGames)
+                        .wins(stats.wins)
+                        .losses(stats.losses)
+                        .winRate(stats.getWinRate())
+                        .build();
+                favoriteChampionRepository.save(newChampion);
+            }
+        }
+
+        // 기존 데이터 중 현재 TOP 3에 포함되지 않는 것은 삭제 (rank가 3보다 큰 경우)
+        for (FavoriteChampion existing : existingChampions) {
+            if (existing.getRank() > sortedStats.size()) {
+                favoriteChampionRepository.delete(existing);
+            }
+        }
+
+        log.info("선호 챔피언 계산 및 저장 완료: gameAccountId={}, 저장된 챔피언 수={}", 
+                gameAccountId, sortedStats.size());
+    }
+
+    /**
+     * 챔피언 통계를 저장하는 내부 클래스
+     */
+    private static class ChampionStats {
+        Integer championId;
+        String championName;
+        int totalGames = 0;
+        int wins = 0;
+        int losses = 0;
+
+        ChampionStats(Integer championId, String championName) {
+            this.championId = championId;
+            this.championName = championName;
+        }
+
+        double getWinRate() {
+            if (totalGames == 0) {
+                return 0.0;
+            }
+            return (double) wins / totalGames * 100.0;
+        }
+    }
+
+    /**
+     * 선호 챔피언 TOP 3 조회
+     * @param gameAccountId 게임 계정 ID
+     * @param userId 인증된 사용자 ID (로그용)
+     * @return 선호 챔피언 목록
+     */
+    @Transactional(readOnly = true)
+    public List<FavoriteChampionResponse> getFavoriteChampions(Long gameAccountId, Long userId) {
+        // 게임 계정 조회
+        GameAccount gameAccount = gameAccountRepository.findById(gameAccountId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
+
+        // DB에서 선호 챔피언 조회
+        List<FavoriteChampion> favoriteChampions = favoriteChampionRepository
+                .findByGameAccount_GameAccountIdOrderByRankAsc(gameAccountId);
+
+        if (favoriteChampions.isEmpty()) {
+            log.debug("선호 챔피언 데이터가 없습니다: gameAccountId={}", gameAccountId);
+            return List.of();
+        }
+
+        // Data Dragon 버전 가져오기
+        String version = dataDragonService.getLatestVersion();
+
+        // FavoriteChampionResponse로 변환
+        return favoriteChampions.stream()
+                .map(fc -> {
+                    String championImageUrl = getChampionImageUrl(fc.getChampionName(), version);
+                    return FavoriteChampionResponse.builder()
+                            .rank(fc.getRank())
+                            .championId(fc.getChampionId())
+                            .championName(fc.getChampionName())
+                            .championImageUrl(championImageUrl)
+                            .totalGames(fc.getTotalGames())
+                            .wins(fc.getWins())
+                            .losses(fc.getLosses())
+                            .winRate(fc.getWinRate())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }
 

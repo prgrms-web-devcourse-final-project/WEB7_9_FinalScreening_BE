@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.gameaccount.controller;
 
+import com.back.matchduo.domain.gameaccount.dto.response.FavoriteChampionResponse;
 import com.back.matchduo.domain.gameaccount.dto.response.MatchResponse;
 import com.back.matchduo.domain.gameaccount.service.MatchService;
 import com.back.matchduo.global.security.AuthPrincipal;
@@ -75,6 +76,29 @@ public class MatchController {
             @RequestParam(defaultValue = "20") int count) {
         Long userId = AuthPrincipal.getUserId();
         List<MatchResponse> responses = matchService.getRecentMatches(gameAccountId, userId, count);
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 선호 챔피언 TOP 3 조회
+     * 누구나 다른 사람의 게임 계정 선호 챔피언도 조회할 수 있습니다.
+     * @param gameAccountId 게임 계정 ID
+     * @return 선호 챔피언 목록 (최대 3개)
+     */
+    @GetMapping("/{gameAccountId}/champions/favorite")
+    @Operation(
+            summary = "선호 챔피언 조회",
+            description = "DB에 저장된 게임 계정의 최근 20게임 기준 선호 챔피언 TOP 3를 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "선호 챔피언 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "게임 계정을 찾을 수 없습니다.")
+    })
+    public ResponseEntity<List<FavoriteChampionResponse>> getFavoriteChampions(
+            @Parameter(description = "게임 계정 ID", required = true)
+            @PathVariable Long gameAccountId) {
+        Long userId = AuthPrincipal.getUserId();
+        List<FavoriteChampionResponse> responses = matchService.getFavoriteChampions(gameAccountId, userId);
         return ResponseEntity.ok(responses);
     }
 }
