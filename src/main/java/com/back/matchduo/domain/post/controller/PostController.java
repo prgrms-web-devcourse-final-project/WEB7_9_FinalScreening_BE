@@ -5,6 +5,7 @@ import com.back.matchduo.domain.post.dto.request.PostStatusUpdateRequest;
 import com.back.matchduo.domain.post.dto.request.PostUpdateRequest;
 import com.back.matchduo.domain.post.dto.response.PostCreateResponse;
 import com.back.matchduo.domain.post.dto.response.PostDeleteResponse;
+import com.back.matchduo.domain.post.dto.response.PostDetailResponse;
 import com.back.matchduo.domain.post.dto.response.PostListResponse;
 import com.back.matchduo.domain.post.dto.response.PostStatusUpdateResponse;
 import com.back.matchduo.domain.post.dto.response.PostUpdateResponse;
@@ -74,6 +75,15 @@ public class PostController {
     ) {
         Long userId = AuthPrincipal.getUserId();
         return postService.updatePostStatus(postId, request, userId);
+    }
+
+    // 모집글 단건 조회 (작성자 검증)
+    @GetMapping("/{postId}")
+    public PostDetailResponse getPostDetail(
+            @PathVariable Long postId
+    ) {
+        Long userId = AuthPrincipal.getUserId();
+        return postService.getPostDetail(postId, userId);
     }
 
     // 모집글 삭제 (작성자만)

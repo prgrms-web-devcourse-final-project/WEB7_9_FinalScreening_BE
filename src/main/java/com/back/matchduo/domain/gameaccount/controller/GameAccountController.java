@@ -4,8 +4,14 @@ import com.back.matchduo.domain.gameaccount.dto.request.GameAccountCreateRequest
 import com.back.matchduo.domain.gameaccount.dto.request.GameAccountUpdateRequest;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountDeleteResponse;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountResponse;
+import com.back.matchduo.domain.gameaccount.dto.response.RefreshAllResponse;
 import com.back.matchduo.domain.gameaccount.service.GameAccountService;
 import com.back.matchduo.global.security.AuthPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/game-accounts")
 @RequiredArgsConstructor
+@Tag(name = "게임 계정", description = "게임 계정 관리 및 통합 전적 갱신 API")
 public class GameAccountController {
 
     private final GameAccountService gameAccountService;
@@ -87,5 +94,32 @@ public class GameAccountController {
                 .message("게임 계정 연동이 해제되었습니다.")
                 .gameAccountId(gameAccountId)
                 .build());
+    }
+
+    /**
+     * 게임 계정의 랭크 정보와 매치 정보를 함께 갱신 (통합 전적 갱신)
+     * @param gameAccountId 게임 계정 ID
+     * @param matchCount 조회할 매치 개수 (기본값: 20)
+     * @return 갱신된 랭크 정보와 매치 정보
+     */
+    @PostMapping("/{gameAccountId}/refresh-all")
+    @Operation(
+            summary = "통합 전적 갱신",
+            description = "게임 계정의 랭크 정보와 매치 정보를 함께 갱신합니다. Riot API를 호출하여 최신 데이터를 가져와 DB에 저장합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "전적 갱신 성공"),
+            @ApiResponse(responseCode = "404", description = "게임 계정을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "400", description = "게임 계정에 puuid가 없습니다. 먼저 게임 계정을 등록해주세요."),
+            @ApiResponse(responseCode = "500", description = "랭크 정보 또는 매치 정보를 가져오는데 실패했습니다.")
+    })
+    public ResponseEntity<RefreshAllResponse> refreshAll(
+            @Parameter(description = "게임 계정 ID", required = true)
+            @PathVariable Long gameAccountId,
+            @Parameter(description = "조회할 매치 개수 (기본값: 20, 최대: 100)")
+            @RequestParam(defaultValue = "20") int matchCount) {
+        Long userId = AuthPrincipal.getUserId();
+        RefreshAllResponse response = gameAccountService.refreshAll(gameAccountId, userId, matchCount);
+        return ResponseEntity.ok(response);
     }
 }

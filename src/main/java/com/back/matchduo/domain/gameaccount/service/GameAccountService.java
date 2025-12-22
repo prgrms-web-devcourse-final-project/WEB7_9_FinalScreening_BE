@@ -4,6 +4,7 @@ import com.back.matchduo.domain.gameaccount.client.RiotApiClient;
 import com.back.matchduo.domain.gameaccount.dto.request.GameAccountCreateRequest;
 import com.back.matchduo.domain.gameaccount.dto.request.GameAccountUpdateRequest;
 import com.back.matchduo.domain.gameaccount.dto.response.GameAccountResponse;
+import com.back.matchduo.domain.gameaccount.dto.response.RefreshAllResponse;
 import com.back.matchduo.domain.gameaccount.dto.RiotApiDto;
 import com.back.matchduo.domain.gameaccount.entity.GameAccount;
 import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
@@ -14,6 +15,7 @@ import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +24,6 @@ import java.util.List;
 @Slf4j
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class GameAccountService {
 
     private final GameAccountRepository gameAccountRepository;
@@ -30,6 +31,25 @@ public class GameAccountService {
     private final RiotApiClient riotApiClient;
     private final RankRepository rankRepository;
     private final DataDragonService dataDragonService;
+    private final RankService rankService;
+    private final MatchService matchService;
+
+    public GameAccountService(
+            GameAccountRepository gameAccountRepository,
+            UserRepository userRepository,
+            RiotApiClient riotApiClient,
+            RankRepository rankRepository,
+            DataDragonService dataDragonService,
+            @Lazy RankService rankService,
+            @Lazy MatchService matchService) {
+        this.gameAccountRepository = gameAccountRepository;
+        this.userRepository = userRepository;
+        this.riotApiClient = riotApiClient;
+        this.rankRepository = rankRepository;
+        this.dataDragonService = dataDragonService;
+        this.rankService = rankService;
+        this.matchService = matchService;
+    }
     
     private static final String GAME_TYPE_LEAGUE_OF_LEGENDS = "LEAGUE_OF_LEGENDS";
     private static final String GAME_TYPE_LEAGUE_OF_LEGENDS_KR = "리그 오브 레전드";
@@ -176,6 +196,7 @@ public class GameAccountService {
         }
 
         // Riot API 호출하여 새로운 puuid 가져오기
+        String oldPuuid = gameAccount.getPuuid();  // 이전 puuid 저장
         String puuid = null;
         try {
             RiotApiDto.AccountResponse accountResponse = riotApiClient.getAccountByRiotId(
@@ -189,6 +210,14 @@ public class GameAccountService {
                     request.getGameNickname(), request.getGameTag(), e.getMessage());
             // Riot API 호출 실패 시 기존 puuid 유지
             puuid = gameAccount.getPuuid();
+        }
+
+        // puuid가 변경된 경우 이전 계정의 매치 정보 삭제 (한 개의 puuid 정보만 유지)
+        if (oldPuuid != null && puuid != null && !oldPuuid.equals(puuid)) {
+            log.info("게임 계정 puuid 변경 감지: gameAccountId={}, oldPuuid={}, newPuuid={}", 
+                    gameAccountId, oldPuuid, puuid);
+            matchService.deleteMatchesByGameAccountId(gameAccountId);
+            log.info("이전 계정의 매치 정보 삭제 완료: gameAccountId={}", gameAccountId);
         }
 
         // 프로필 아이콘 갱신 (롤만, 계정 수정 시)
@@ -307,5 +336,30 @@ public class GameAccountService {
             log.warn("소환사 아이콘 URL 생성 실패: profileIconId={}, error={}", profileIconId, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 게임 계정의 랭크 정보와 매치 정보를 함께 갱신 (통합 전적 갱신)
+     * @param gameAccountId 게임 계정 ID
+     * @param userId 인증된 사용자 ID (로그용)
+     * @param matchCount 조회할 매치 개수 (기본값: 20)
+     * @return 갱신된 랭크 정보와 매치 정보
+     */
+    public RefreshAllResponse refreshAll(Long gameAccountId, Long userId, int matchCount) {
+        log.info("통합 전적 갱신 시작: gameAccountId={}, 요청 userId={}, matchCount={}", gameAccountId, userId, matchCount);
+        
+        // 1. 랭크 정보 갱신
+        var ranks = rankService.refreshRankData(gameAccountId, userId);
+        log.info("랭크 정보 갱신 완료: gameAccountId={}, 갱신된 랭크 개수={}", gameAccountId, ranks.size());
+        
+        // 2. 매치 정보 갱신
+        var matches = matchService.refreshMatchHistory(gameAccountId, userId, matchCount);
+        log.info("매치 정보 갱신 완료: gameAccountId={}, 갱신된 매치 개수={}", gameAccountId, matches.size());
+        
+        return RefreshAllResponse.builder()
+                .ranks(ranks)
+                .matches(matches)
+                .message("전적 갱신이 완료되었습니다.")
+                .build();
     }
 }
