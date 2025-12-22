@@ -17,6 +17,8 @@ import com.back.matchduo.domain.post.entity.Post;
 import com.back.matchduo.domain.post.entity.PostStatus;
 import com.back.matchduo.domain.post.entity.QueueType;
 import com.back.matchduo.domain.user.entity.User;
+import com.back.matchduo.global.exeption.CustomErrorCode;
+import com.back.matchduo.global.exeption.CustomException;
 import com.back.matchduo.global.security.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,13 +34,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -123,6 +124,7 @@ class ChatControllerTest {
                 new ChatRoomSummaryResponse.OtherUserResponse(1L, "작성자", null),
                 null,
                 0,
+                "소환사의 협곡",
                 "DUO",
                 "테스트 메모",
                 true,
@@ -158,7 +160,7 @@ class ChatControllerTest {
 
         // when & then
         mockMvc.perform(
-                        post("/api/v1/chats/{chatId}/messages", 1L)
+                        post("/api/v1/chats/{chatRoomId}/messages", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(csrf())
@@ -184,7 +186,7 @@ class ChatControllerTest {
 
         // when & then
         mockMvc.perform(
-                        get("/api/v1/chats/{chatId}/messages", 1L)
+                        get("/api/v1/chats/{chatRoomId}/messages", 1L)
                                 .param("size", "30")
                                 .with(user(userDetails))
                 )
@@ -202,7 +204,7 @@ class ChatControllerTest {
 
         // when & then
         mockMvc.perform(
-                        get("/api/v1/chats/{chatId}", 1L)
+                        get("/api/v1/chats/{chatRoomId}", 1L)
                                 .with(user(userDetails))
                 )
                 .andExpect(status().isOk())
@@ -220,7 +222,7 @@ class ChatControllerTest {
 
         // when & then
         mockMvc.perform(
-                        delete("/api/v1/chats/{chatId}", 1L)
+                        delete("/api/v1/chats/{chatRoomId}", 1L)
                                 .with(csrf())
                                 .with(user(userDetails))
                 )
@@ -246,7 +248,7 @@ class ChatControllerTest {
 
         // when & then
         mockMvc.perform(
-                        post("/api/v1/chats/{chatId}/messages/read", 1L)
+                        post("/api/v1/chats/{chatRoomId}/messages/read", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(csrf())
@@ -255,6 +257,127 @@ class ChatControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.chatRoomId").value(1L))
                 .andExpect(jsonPath("$.lastReadMessageId").value(10L));
+    }
+
+    // ==================== 실패 케이스 ====================
+
+    @Test
+    @DisplayName("채팅방 상세 조회 실패 - 존재하지 않는 채팅방")
+    void getChatRoom_notFound() throws Exception {
+        // given
+        given(chatRoomService.getRoomWithGameAccount(999L, 2L))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(
+                        get("/api/v1/chats/{chatRoomId}", 999L)
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("채팅방 상세 조회 실패 - 참여자가 아님")
+    void getChatRoom_notMember() throws Exception {
+        // given
+        given(chatRoomService.getRoomWithGameAccount(1L, 2L))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_USER_NOT_IN_ROOM));
+
+        // when & then
+        mockMvc.perform(
+                        get("/api/v1/chats/{chatRoomId}", 1L)
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("메시지 전송 실패 - 닫힌 채팅방")
+    void sendMessage_roomClosed() throws Exception {
+        // given
+        ChatMessageSendRequest request = new ChatMessageSendRequest(MessageType.TEXT, "안녕하세요!");
+        given(chatMessageService.send(anyLong(), anyLong(), any(), any()))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_ROOM_CLOSED));
+
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/chats/{chatRoomId}/messages", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                                .with(csrf())
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("메시지 목록 조회 실패 - 존재하지 않는 채팅방")
+    void getMessages_notFound() throws Exception {
+        // given
+        given(chatMessageService.getMessagesWithRoom(anyLong(), anyLong(), any(), anyInt()))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(
+                        get("/api/v1/chats/{chatRoomId}/messages", 999L)
+                                .param("size", "30")
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("채팅방 나가기 실패 - 존재하지 않는 채팅방")
+    void leaveRoom_notFound() throws Exception {
+        // given
+        given(chatRoomService.leave(999L, 2L))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(
+                        delete("/api/v1/chats/{chatRoomId}", 999L)
+                                .with(csrf())
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("채팅방 생성 실패 - 존재하지 않는 모집글")
+    void createChatRoom_postNotFound() throws Exception {
+        // given
+        ChatRoomCreateRequest request = new ChatRoomCreateRequest(999L);
+        given(chatRoomService.createOrGet(999L, 2L))
+                .willThrow(new CustomException(CustomErrorCode.POST_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/chats")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                                .with(csrf())
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("채팅방 생성 실패 - 본인에게 채팅 불가")
+    void createChatRoom_sameSenderReceiver() throws Exception {
+        // given
+        ChatRoomCreateRequest request = new ChatRoomCreateRequest(100L);
+        given(chatRoomService.createOrGet(100L, 2L))
+                .willThrow(new CustomException(CustomErrorCode.CHAT_SAME_SENDER_RECEIVER));
+
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/chats")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                                .with(csrf())
+                                .with(user(userDetails))
+                )
+                .andExpect(status().isBadRequest());
     }
 
 }
