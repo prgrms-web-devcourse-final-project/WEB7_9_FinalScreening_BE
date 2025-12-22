@@ -3,6 +3,7 @@ package com.back.matchduo.domain.party.entity;
 import com.back.matchduo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -51,6 +52,7 @@ public class PartyMember {
     private LocalDateTime leftAt;
 
 
+    @Builder
     public PartyMember(Party party, User user, PartyMemberRole role) {
         this.party = party;
         this.user = user;

@@ -5,6 +5,8 @@ import com.back.matchduo.domain.party.entity.PartyMember;
 import com.back.matchduo.domain.party.entity.PartyMemberRole;
 import com.back.matchduo.domain.gameaccount.entity.GameAccount;
 import com.back.matchduo.domain.gameaccount.entity.Rank;
+import com.back.matchduo.domain.party.repository.PartyMemberRepository;
+import com.back.matchduo.domain.party.repository.PartyRepository;
 import com.back.matchduo.domain.post.dto.request.PostCreateRequest;
 import com.back.matchduo.domain.post.dto.request.PostUpdateRequest;
 import com.back.matchduo.domain.post.dto.response.*;
@@ -39,6 +41,9 @@ public class PostListFacade {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
+
+    private final PartyRepository partyRepository;
+    private final PartyMemberRepository partyMemberRepository;
 
     private final PostValidator postValidator;
     private final PostListQueryRepository postListQueryRepository;
@@ -76,6 +81,17 @@ public class PostListFacade {
 
         Post saved = postRepository.save(post);
 
+        // 1. 파티 생성 및 저장
+        Party party = new Party(saved.getId(), userId);
+        partyRepository.save(party);
+
+        PartyMember leader = PartyMember.builder()
+                .party(party)
+                .user(writerRef)
+                .role(PartyMemberRole.LEADER)
+                .build();
+        partyMemberRepository.save(leader);
+
         // 생성 직후 participants는 최소 작성자 1명으로 표시
         List<Position> lookingPositions = request.lookingPositions();
 
@@ -94,7 +110,7 @@ public class PostListFacade {
                 )
         );
 
-        return PostCreateResponse.of(saved, lookingPositions, 1, writerDto, participants);
+        return PostCreateResponse.of(saved, party.getId(),  lookingPositions, 1, writerDto, participants);
     }
 
     // 모집글 수정 + 화면용 응답 조립
