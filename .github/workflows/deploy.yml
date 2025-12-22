@@ -34,7 +34,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          MY_GHCR_TOKEN: ${{ secrets.MY_GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MY_GHCR_TOKEN }}
         with:
           tag_name: ${{ steps.create_tag.outputs.new_tag }}
           release_name: Release ${{ steps.create_tag.outputs.new_tag }}
@@ -62,7 +62,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.MY_GHCR_TOKEN }}
 
       - name: set lower case owner name
