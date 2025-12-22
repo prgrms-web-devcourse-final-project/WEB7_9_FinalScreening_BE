@@ -16,8 +16,10 @@ import com.back.matchduo.global.exeption.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
@@ -83,6 +85,20 @@ public class GameAccountService {
             puuid = accountResponse != null ? accountResponse.getPuuid() : null;
             log.info("Riot API 호출 성공: puuid={}", puuid != null ? "조회됨" : "null");
         } catch (Exception e) {
+            // 예외 체인에서 HttpClientErrorException 확인
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof HttpClientErrorException httpError) {
+                    if (httpError.getStatusCode() == HttpStatus.NOT_FOUND) {
+                        // 404 에러: 존재하지 않는 게임 계정
+                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}", 
+                                request.getGameNickname(), request.getGameTag());
+                        throw new CustomException(CustomErrorCode.RIOT_ACCOUNT_NOT_FOUND);
+                    }
+                }
+                cause = cause.getCause();
+            }
+            // 네트워크 오류 등 기타 예외는 로그만 남기고 계속 진행
             log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid 없이 계정 생성합니다.", 
                     request.getGameNickname(), request.getGameTag(), e.getMessage());
             // Riot API 호출 실패 시에도 계정은 생성 (puuid는 null)
@@ -206,6 +222,20 @@ public class GameAccountService {
             puuid = accountResponse != null ? accountResponse.getPuuid() : null;
             log.info("Riot API 호출 성공: puuid={}", puuid != null ? "조회됨" : "null");
         } catch (Exception e) {
+            // 예외 체인에서 HttpClientErrorException 확인
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof HttpClientErrorException httpError) {
+                    if (httpError.getStatusCode() == HttpStatus.NOT_FOUND) {
+                        // 404 에러: 존재하지 않는 게임 계정
+                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}", 
+                                request.getGameNickname(), request.getGameTag());
+                        throw new CustomException(CustomErrorCode.RIOT_ACCOUNT_NOT_FOUND);
+                    }
+                }
+                cause = cause.getCause();
+            }
+            // 네트워크 오류 등 기타 예외는 로그만 남기고 기존 puuid 유지
             log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid는 기존 값을 유지합니다.", 
                     request.getGameNickname(), request.getGameTag(), e.getMessage());
             // Riot API 호출 실패 시 기존 puuid 유지
