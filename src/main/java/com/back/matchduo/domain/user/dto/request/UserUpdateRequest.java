@@ -6,10 +6,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserUpdateRequest(
-        @NotBlank
-        @Schema(description = "이메일", example = "user@email.com")
-        String email,
-
         @Schema(description = "이미지", example = "용량은 최대 10MB로 제한됩니다.")
         String profile_image,
 

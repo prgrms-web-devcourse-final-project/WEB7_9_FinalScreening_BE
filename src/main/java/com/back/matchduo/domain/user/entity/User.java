@@ -3,10 +3,6 @@ package com.back.matchduo.domain.user.entity;
 import com.back.matchduo.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -63,6 +59,10 @@ public class User extends BaseEntity {
     }
 
     public void setProfile_image(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }
 }
