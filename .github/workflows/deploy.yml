@@ -11,6 +11,7 @@ on:
       - "Dockerfile"
     branches:
       - main
+      - chore/#48/deploy-fix-final
 
 # 권한 최소화/명시화
 permissions:
@@ -127,10 +128,12 @@ jobs:
             # 현재 실행 중인 컨테이너 확인
             if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
               CURRENT="app1_1"
+              CURRENT_PORT=8080
               NEXT="app1_2"
               NEXT_PORT=8081 # 헬스체크용 외부포트
             else
               CURRENT="app1_2"
+              CURRENT_PORT=8081
               NEXT="app1_1"
               NEXT_PORT=8080 # 헬스체크용 외부포트
             fi
@@ -140,6 +143,7 @@ jobs:
             docker rm "$NEXT" 2>/dev/null || true
             
             docker run -d \
+              --pull always \
               --network $NETWORK \
               --name "$NEXT" \
               -p "$NEXT_PORT":8080 \
