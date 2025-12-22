@@ -3,8 +3,11 @@ package com.back.matchduo.domain.post.service;
 import com.back.matchduo.domain.party.entity.Party;
 import com.back.matchduo.domain.party.entity.PartyMember;
 import com.back.matchduo.domain.party.entity.PartyMemberRole;
+import com.back.matchduo.domain.gameaccount.entity.FavoriteChampion;
 import com.back.matchduo.domain.gameaccount.entity.GameAccount;
+import com.back.matchduo.domain.gameaccount.entity.MatchParticipant;
 import com.back.matchduo.domain.gameaccount.entity.Rank;
+import com.back.matchduo.domain.gameaccount.service.DataDragonService;
 import com.back.matchduo.domain.party.repository.PartyMemberRepository;
 import com.back.matchduo.domain.party.repository.PartyRepository;
 import com.back.matchduo.domain.post.dto.request.PostCreateRequest;
@@ -50,6 +53,7 @@ public class PostListFacade {
     private final PostPartyQueryRepository postPartyQueryRepository;
     private final PostGameAccountQueryRepository postGameAccountQueryRepository;
     private final PostGameProfileIconUrlBuilder iconUrlBuilder;
+    private final DataDragonService dataDragonService;
 
     // 모집글 생성 + 화면에 필요한 최소 파티 표시(작성자만)
     @Transactional
@@ -226,6 +230,38 @@ public class PostListFacade {
                     .put(r.getQueueType(), r);
         }
 
+        // MatchParticipant 일괄 조회 (솔로랭크 최근 20경기)
+        List<MatchParticipant> matchParticipants = 
+            postGameAccountQueryRepository.findRecentSoloRankMatchParticipantsByGameAccountIds(gameAccountIds, 20);
+
+        // gameAccountId -> List<MatchParticipant> 매핑
+        Map<Long, List<MatchParticipant>> matchesByAccountId = new HashMap<>();
+        for (MatchParticipant mp : matchParticipants) {
+            Long gaId = mp.getGameAccount().getGameAccountId();
+            matchesByAccountId.computeIfAbsent(gaId, k -> new ArrayList<>())
+                    .add(mp);
+        }
+
+        // 각 계정별 최근 20경기만 유지
+        for (Long gaId : matchesByAccountId.keySet()) {
+            List<MatchParticipant> matches = matchesByAccountId.get(gaId);
+            if (matches.size() > 20) {
+                matchesByAccountId.put(gaId, matches.subList(0, 20));
+            }
+        }
+
+        // FavoriteChampion 일괄 조회
+        List<FavoriteChampion> favoriteChampions = 
+            postGameAccountQueryRepository.findFavoriteChampionsByGameAccountIds(gameAccountIds);
+
+        // gameAccountId -> List<FavoriteChampion> 매핑
+        Map<Long, List<FavoriteChampion>> championsByAccountId = new HashMap<>();
+        for (FavoriteChampion fc : favoriteChampions) {
+            Long gaId = fc.getGameAccount().getGameAccountId();
+            championsByAccountId.computeIfAbsent(gaId, k -> new ArrayList<>())
+                    .add(fc);
+        }
+
         // Party 일괄 조회 (postIds IN)
         List<Long> postIds = posts.stream().map(Post::getId).toList();
         List<Party> parties = postPartyQueryRepository.findPartiesByPostIds(postIds);
@@ -264,16 +300,27 @@ public class PostListFacade {
                 Rank matched = findSoloRank(ga.getGameAccountId(), rankMap);
 
                 if (matched != null) {
+                    // KDA 계산
+                    List<MatchParticipant> matches = matchesByAccountId.getOrDefault(ga.getGameAccountId(), List.of());
+                    KdaStats kdaStats = calculateKdaStats(matches);
+
+                    // 선호 챔피언 이미지 URL 생성
+                    List<FavoriteChampion> champions = championsByAccountId.getOrDefault(ga.getGameAccountId(), List.of());
+                    List<String> championImageUrls = buildChampionImageUrls(champions);
+
                     writerGameSummary = new PostWriter.WriterGameSummary(
                             matched.getTier(),
                             matched.getRank(),
-                            null, // winRate placeholder
-                            null, // kda placeholder
-                            null  // favoriteChampions placeholder
+                            matched.getWinRate(),
+                            kdaStats.kda,
+                            kdaStats.avgKills,
+                            kdaStats.avgDeaths,
+                            kdaStats.avgAssists,
+                            championImageUrls
                     );
                 } else {
                     writerGameSummary = new PostWriter.WriterGameSummary(
-                            null, null, null, null, null
+                            null, null, null, null, null, null, null, null
                     );
                 }
             }
@@ -374,11 +421,11 @@ public class PostListFacade {
                 writerGameSummary = new PostWriter.WriterGameSummary(
                         soloRank.getTier(),
                         soloRank.getRank(),
-                        null, null, null
+                        null, null, null, null, null, null
                 );
             } else {
                 writerGameSummary = new PostWriter.WriterGameSummary(
-                        null, null, null, null, null
+                        null, null, null, null, null, null, null, null
                 );
             }
         }
@@ -469,5 +516,63 @@ public class PostListFacade {
                 gameAccount,
                 gameSummary
         );
+    }
+
+    private static class KdaStats {
+        Double kda;
+        Double avgKills;
+        Double avgDeaths;
+        Double avgAssists;
+
+        KdaStats(Double kda, Double avgKills, Double avgDeaths, Double avgAssists) {
+            this.kda = kda;
+            this.avgKills = avgKills;
+            this.avgDeaths = avgDeaths;
+            this.avgAssists = avgAssists;
+        }
+    }
+
+    private KdaStats calculateKdaStats(List<MatchParticipant> matches) {
+        if (matches == null || matches.isEmpty()) {
+            return new KdaStats(null, null, null, null);
+        }
+
+        int totalKills = matches.stream().mapToInt(MatchParticipant::getKills).sum();
+        int totalDeaths = matches.stream().mapToInt(MatchParticipant::getDeaths).sum();
+        int totalAssists = matches.stream().mapToInt(MatchParticipant::getAssists).sum();
+
+        int gameCount = matches.size();
+
+        double avgKills = (double) totalKills / gameCount;
+        double avgDeaths = (double) totalDeaths / gameCount;
+        double avgAssists = (double) totalAssists / gameCount;
+
+        double kda = avgDeaths == 0
+                ? (avgKills + avgAssists)
+                : (avgKills + avgAssists) / avgDeaths;
+
+        kda = Math.round(kda * 100.0) / 100.0;
+        avgKills = Math.round(avgKills * 10.0) / 10.0;
+        avgDeaths = Math.round(avgDeaths * 10.0) / 10.0;
+        avgAssists = Math.round(avgAssists * 10.0) / 10.0;
+
+        return new KdaStats(kda, avgKills, avgDeaths, avgAssists);
+    }
+
+    private List<String> buildChampionImageUrls(List<FavoriteChampion> champions) {
+        if (champions == null || champions.isEmpty()) {
+            return List.of();
+        }
+
+        String version = dataDragonService.getLatestVersion();
+
+        return champions.stream()
+                .limit(3)
+                .map(fc -> String.format(
+                        "https://ddragon.leagueoflegends.com/cdn/%s/img/champion/%s.png",
+                        version,
+                        fc.getChampionName()
+                ))
+                .collect(Collectors.toList());
     }
 }
