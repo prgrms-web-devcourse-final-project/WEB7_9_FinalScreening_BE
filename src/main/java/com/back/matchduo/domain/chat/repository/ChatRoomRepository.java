@@ -21,9 +21,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
            "JOIN FETCH r.post p " +
            "JOIN FETCH p.gameMode " +
            "JOIN FETCH r.receiver JOIN FETCH r.sender " +
-           "WHERE (r.receiver.id = :userId OR r.sender.id = :userId) " +
+           "WHERE (" +
+           "    (r.sender.id = :userId AND r.senderLeft = false) OR " +
+           "    (r.receiver.id = :userId AND r.receiverLeft = false)" +
+           ") " +
            "AND p.isActive = true " +
-           "AND NOT (r.senderLeft = true AND r.receiverLeft = true) " +
            "AND (:cursor IS NULL OR r.id < :cursor) " +
            "ORDER BY r.id DESC")
     List<ChatRoom> findMyRooms(@Param("userId") Long userId,
@@ -46,17 +48,18 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     /** WebSocket 구독 시 채팅방 멤버 검증용 */
     @Query("SELECT COUNT(r) > 0 FROM ChatRoom r " +
-           "WHERE r.id = :chatId " +
+           "WHERE r.id = :chatRoomId " +
            "AND (r.sender.id = :userId OR r.receiver.id = :userId)")
     boolean existsByIdAndMember(
-            @Param("chatId") Long chatId,
+            @Param("chatRoomId") Long chatRoomId,
             @Param("userId") Long userId);
 
-    /** 채팅방 상세 조회 (sender, receiver, post 함께 로드 - N+1 방지) */
+    /** 채팅방 상세 조회 (sender, receiver, post, gameMode 함께 로드 - N+1 방지) */
     @Query("SELECT r FROM ChatRoom r " +
            "JOIN FETCH r.sender " +
            "JOIN FETCH r.receiver " +
            "JOIN FETCH r.post p " +
+           "JOIN FETCH p.gameMode " +
            "WHERE r.id = :id")
     Optional<ChatRoom> findByIdWithDetails(@Param("id") Long id);
 

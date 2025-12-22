@@ -15,6 +15,8 @@ public interface ReviewRequestRepository extends JpaRepository<ReviewRequest, Lo
 
     Optional<ReviewRequest> findByPostIdAndRequestUserId(Long postId, Long userId);
 
+    List<ReviewRequest> findByRequestUserIdAndStatusAndIsActiveTrue(Long userId, ReviewRequestStatus reviewRequestStatus);
+
     @Modifying
     @Query("DELETE FROM ReviewRequest rr WHERE rr.post.id = :postId")
     void deleteAllByPostIdHard(@Param("postId") Long postId);

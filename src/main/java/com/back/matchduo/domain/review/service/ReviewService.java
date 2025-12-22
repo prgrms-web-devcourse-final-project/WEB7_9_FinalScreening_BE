@@ -66,9 +66,7 @@ public class ReviewService {
                 .content(reqDto.content())
                 .build();
 
-        System.out.println(">>> 저장 직전입니다!"); // 로그 1
         Review savedReview = reviewRepository.save(review);
-        System.out.println(">>> 저장 완료되었습니다!"); // 로그 2
 
         long totalTeamMembers = partyMemberRepository.countByParty_PostId(postId) - 1;
         long myReviewCount = reviewRepository.countByPostIdAndReviewerId(postId, currentUserId);
@@ -116,6 +114,8 @@ public class ReviewService {
 
     // 특정 유저 리뷰 분포 조회(비율)
     public ReviewDistributionResponse getReviewDistribution(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
         List<Object[]> results = reviewRepository.countReviewEmojisByRevieweeId(userId);
 
         long goodCount = 0;
@@ -133,6 +133,6 @@ public class ReviewService {
             }
         }
 
-        return ReviewDistributionResponse.of(goodCount, normalCount, badCount);
+        return ReviewDistributionResponse.of(userId,user.getNickname(),goodCount, normalCount, badCount);
     }
 }

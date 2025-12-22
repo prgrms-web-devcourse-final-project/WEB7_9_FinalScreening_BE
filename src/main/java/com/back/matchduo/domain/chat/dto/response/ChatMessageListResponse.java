@@ -44,6 +44,7 @@ public record ChatMessageListResponse(
     /** 모집글 요약 */
     public record PostSummaryResponse(
             Long postId,
+            String gameModeName,
             String queueType,
             String memo
     ) {}
@@ -82,6 +83,7 @@ public record ChatMessageListResponse(
                 OtherUserResponse.of(otherUser),
                 new PostSummaryResponse(
                         room.getPost().getId(),
+                        room.getPost().getGameMode().getName(),
                         room.getPost().getQueueType().name(),
                         room.getPost().getMemo()
                 ),

@@ -111,20 +111,69 @@ jobs:
           working-directory: /home/ubuntu
           comment: Deploy
           command: |
+            # 변수 설정
+            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
+            NETWORK="common"
+            HEALTH_ENDPOINT="/actuator/health"
+            TIMEOUT=60
+            
+            # 이미지 풀 및 비밀번호 생성 (이전과 동일)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            
-            cat <<EOF > /home/ubuntu/application-secret.yml
+            docker pull "$IMAGE"
+            cat <<'EOF' > /home/ubuntu/application-secret.yml
             ${{ secrets.APPLICATION_SECRET }}
             EOF
             
-            docker stop app1 2>/dev/null || true
-            docker rm app1 2>/dev/null || true
+            # 현재 실행 중인 컨테이너 확인
+            if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
+              CURRENT="app1_1"
+              NEXT="app1_2"
+              NEXT_PORT=8081 # 헬스체크용 외부포트
+            else
+              CURRENT="app1_2"
+              NEXT="app1_1"
+              NEXT_PORT=8080 # 헬스체크용 외부포트
+            fi
             
-            docker run -d --name app1 \
-            --network common -p 8080:8080 \
-            -v /home/ubuntu/application-secret.yml:/app/application-secret.yml \
-            -e SPRING_PROFILES_ACTIVE=prod \
-            ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            # 신규 컨테이너 실행 (app1_1 또는 app1_2 이름 유지)
+            docker stop "$NEXT" 2>/dev/null || true
+            docker rm "$NEXT" 2>/dev/null || true
+            
+            docker run -d \
+              --network $NETWORK \
+              --name "$NEXT" \
+              -p "$NEXT_PORT":8080 \
+              -v /home/ubuntu/application-secret.yml:/app/application-secret.yml \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              "$IMAGE"
+            
+            # 헬스 체크 (중요: HAProxy가 감지할 시간을 줘야 함)
+            echo ">>> $NEXT 헬스체크 시작..."
+            START_TIME=$(date +%s)
+            while true; do
+              UP=$(curl -s http://localhost:$NEXT_PORT$HEALTH_ENDPOINT | grep 'UP' || true)
+              if [ -n "$UP" ]; then
+                echo "✅ $NEXT 가 준비되었습니다. HAProxy가 곧 트래픽을 전환합니다."
+                sleep 5 # HAProxy가 헬스체크로 UP을 확인할 수 있도록 잠시 대기
+                break
+              fi
+            
+              if [ $(( $(date +%s) - START_TIME )) -ge $TIMEOUT ]; then
+                docker stop "$NEXT" && docker rm "$NEXT"
+                exit 1
+              fi
+              sleep 5
+            done
+            
+            # 설정 파일 내의 포트 번호를 동적으로 변경하고 리로드합니다.
+            if command -v haproxy &> /dev/null; then
+              sudo sed -i "s/127.0.0.1:$CURRENT_PORT/127.0.0.1:$NEXT_PORT/g" /etc/haproxy/haproxy.cfg
+              sudo systemctl reload haproxy
+              echo "✅ HAProxy 트래픽 전환 완료: $NEXT_PORT"
+            fi
+            
+            # HAProxy가 NEXT를 잡은 후 CURRENT를 꺼야 끊김이 없습니다.
+            docker stop "$CURRENT" 2>/dev/null || true
+            docker rm "$CURRENT" 2>/dev/null || true
             docker image prune -f
+            echo "🚀 무중단 배포 완료: $NEXT 가 가동 중입니다."

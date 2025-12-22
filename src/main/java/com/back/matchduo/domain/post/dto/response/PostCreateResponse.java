@@ -10,6 +10,7 @@ import java.util.List;
 
 public record PostCreateResponse(
         Long postId,
+        Long partyId,
         Long gameModeId,
         String gameMode,
         QueueType queueType,
@@ -25,12 +26,14 @@ public record PostCreateResponse(
         List<PostParticipant> participants
 ) {
     public static PostCreateResponse of(Post post,
+                                        Long partyId,
                                         List<Position> lookingPositions,
                                         Integer currentParticipants,
                                         PostWriter writer,
                                         List<PostParticipant> participants) {
         return new PostCreateResponse(
                 post.getId(),
+                partyId,
                 post.getGameMode().getId(),
                 post.getGameMode().getModeCode(),
                 post.getQueueType(),

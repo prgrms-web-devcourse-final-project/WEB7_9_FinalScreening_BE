@@ -28,6 +28,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Chat", description = "채팅 API")
+
 public class ChatController {
 
     private final ChatRoomService chatRoomService;
@@ -72,47 +73,47 @@ public class ChatController {
     }
 
     @Operation(summary = "채팅방 상세 조회", description = "채팅방의 상세 정보를 조회합니다. 상대방 정보, 모집글 요약, 게임 계정 정보를 포함합니다.")
-    @GetMapping("/api/v1/chats/{chatId}")
+    @GetMapping("/api/v1/chats/{chatRoomId}")
     public ResponseEntity<ChatRoomDetailResponse> getRoom(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long chatId) {
+            @PathVariable Long chatRoomId) {
 
         Long userId = userDetails.getId();
-        ChatRoomDetailWithGameAccount result = chatRoomService.getRoomWithGameAccount(chatId, userId);
+        ChatRoomDetailWithGameAccount result = chatRoomService.getRoomWithGameAccount(chatRoomId, userId);
         return ResponseEntity.ok(ChatRoomDetailResponse.of(result.room(), userId, result.otherGameAccount()));
     }
 
     @Operation(summary = "채팅방 나가기", description = "채팅방에서 퇴장합니다. 한 명이라도 나가면 해당 채팅방은 닫히며 메시지 전송이 불가합니다.")
-    @DeleteMapping("/api/v1/chats/{chatId}")
+    @DeleteMapping("/api/v1/chats/{chatRoomId}")
     public ResponseEntity<ChatRoomLeaveResponse> leaveRoom(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long chatId) {
+            @PathVariable Long chatRoomId) {
 
         Long userId = userDetails.getId();
-        ChatRoom room = chatRoomService.leave(chatId, userId);
+        ChatRoom room = chatRoomService.leave(chatRoomId, userId);
         return ResponseEntity.ok(ChatRoomLeaveResponse.of(room));
     }
 
     @Operation(summary = "메시지 전송", description = "채팅방에 메시지를 전송합니다. TEXT, SYSTEM 타입을 지원합니다.")
-    @PostMapping("/api/v1/chats/{chatId}/messages")
+    @PostMapping("/api/v1/chats/{chatRoomId}/messages")
     public ResponseEntity<ChatMessageSendResponse> sendMessage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long chatId,
+            @PathVariable Long chatRoomId,
             @Valid @RequestBody ChatMessageSendRequest request) {
 
         Long userId = userDetails.getId();
         ChatMessage message = chatMessageService.send(
-                chatId, userId, request.messageType(), request.content());
+                chatRoomId, userId, request.messageType(), request.content());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ChatMessageSendResponse.of(message));
     }
 
     @Operation(summary = "메시지 목록 조회", description = "채팅방의 메시지 목록을 조회합니다. 최신순 정렬, 커서 기반 페이징을 지원합니다.")
-    @GetMapping("/api/v1/chats/{chatId}/messages")
+    @GetMapping("/api/v1/chats/{chatRoomId}/messages")
     public ResponseEntity<ChatMessageListResponse> getMessages(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long chatId,
+            @PathVariable Long chatRoomId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "30") int size) {
 
@@ -120,7 +121,7 @@ public class ChatController {
         int pageSize = Math.min(Math.max(size, 1), 100);
 
         ChatMessagesWithRoom result =
-                chatMessageService.getMessagesWithRoom(chatId, userId, cursor, pageSize + 1);
+                chatMessageService.getMessagesWithRoom(chatRoomId, userId, cursor, pageSize + 1);
 
         List<ChatMessage> messages = result.messages();
         boolean hasNext = messages.size() > pageSize;
@@ -143,18 +144,18 @@ public class ChatController {
     }
 
     @Operation(summary = "메시지 읽음 처리", description = "지정한 메시지까지 읽음 처리합니다. 안 읽은 메시지 수 계산에 사용됩니다.")
-    @PostMapping("/api/v1/chats/{chatId}/messages/read")
+    @PostMapping("/api/v1/chats/{chatRoomId}/messages/read")
     public ResponseEntity<ChatMessageReadResponse> markAsRead(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long chatId,
+            @PathVariable Long chatRoomId,
             @Valid @RequestBody ChatMessageReadRequest request) {
 
         Long userId = userDetails.getId();
         ChatMessageRead readState = chatMessageService.markReadUpTo(
-                chatId, userId, request.lastReadMessageId());
+                chatRoomId, userId, request.lastReadMessageId());
 
         return ResponseEntity.ok(ChatMessageReadResponse.of(
-                chatId,
+                chatRoomId,
                 readState.getLastReadMessage() != null ? readState.getLastReadMessage().getId() : null,
                 readState.getLastReadAt()
         ));

@@ -262,9 +262,11 @@ public class PartyService {
                     Post post = postMap.get(party.getPostId());
                     String postTitle = (post != null) ? post.getMemo() : "삭제된 게시글입니다.";
                     String gameModeName = (post != null) ? post.getGameMode().getName() : "Unknown";
+                    Long gameModeId = (post != null) ? post.getGameMode().getId() : null;
 
                     return MyPartyListResponse.MyPartyDto.of(
                             party.getId(),
+                            gameModeId,
                             party.getPostId(),
                             postTitle,
                             gameModeName,

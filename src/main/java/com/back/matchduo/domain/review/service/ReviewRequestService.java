@@ -19,7 +19,7 @@ public class ReviewRequestService {
 
     // 리뷰작성 가능한 리뷰요청관리 목록 조회
     public List<ReviewRequestResponse> getWritableReviewRequests(Long userId) {
-        List<ReviewRequest> requests = reviewRequestRepository.findMyRequestsByStatus(
+        List<ReviewRequest> requests = reviewRequestRepository.findByRequestUserIdAndStatusAndIsActiveTrue(
                 userId,
                 ReviewRequestStatus.COMPLETED
         );
