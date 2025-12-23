@@ -16,32 +16,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserLoginController {
     private final UserLoginService userLoginService;
 
-    //로그인 기능
-    @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(
-            @RequestBody
-            @Valid
-            UserLoginRequest request
-    ) {
-        UserLoginResponse response = userLoginService.login(request);
-        return ResponseEntity.ok(response);
-    }
-
-    //로그아웃 기능
-    @PostMapping("/logout")
-    public ResponseEntity<UserLoginResponse> logout(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ){
-        userLoginService.logout(request, response);
-        return ResponseEntity.ok().build();
-    }
-
     //회원 탈퇴 기능
     @PostMapping("/resign")
     public ResponseEntity<UserLoginResponse> resign(
             @RequestAttribute("userId")
-            Long userId, // [참고] 인증 필터에서 설정한 유저 PK
+            Long userId, //인증 필터에서 설정한 유저 PK
 
             HttpServletResponse response
     ){
