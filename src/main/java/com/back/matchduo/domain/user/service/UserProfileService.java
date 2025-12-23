@@ -20,13 +20,9 @@ public class UserProfileService {
     private final FileService fileService;
 
     //프로필 조회
-    public UserProfileRequest getProfile(User user) {
-        return new UserProfileRequest(
-                user.getEmail(),
-                user.getProfileImage(),
-                user.getNickname(),
-                user.getComment()
-        );
+    public UserProfileResponse getProfile(User user) {
+        User currentUser = findUser(user.getId());
+        return UserProfileResponse.from(currentUser);
     }
 
     // 닉네임 수정

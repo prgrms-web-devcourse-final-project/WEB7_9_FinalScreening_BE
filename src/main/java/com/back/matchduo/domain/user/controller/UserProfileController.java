@@ -2,6 +2,7 @@ package com.back.matchduo.domain.user.controller;
 
 import com.back.matchduo.domain.user.dto.request.UserProfileRequest;
 import com.back.matchduo.domain.user.dto.request.UserUpdateRequest;
+import com.back.matchduo.domain.user.dto.response.UserProfileResponse;
 import com.back.matchduo.domain.user.service.UserProfileService;
 import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
@@ -21,10 +22,10 @@ public class UserProfileController {
     private final UserProfileService userProfileService;
 
     @GetMapping
-    public ResponseEntity<UserProfileRequest> getProfile(
+    public ResponseEntity<UserProfileResponse> getProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        UserProfileRequest response = userProfileService.getProfile(userDetails.getUser());
+        UserProfileResponse response = userProfileService.getProfile(userDetails.getUser());
         return ResponseEntity.ok(response);
     }
 

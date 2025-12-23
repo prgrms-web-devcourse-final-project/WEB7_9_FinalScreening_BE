@@ -18,9 +18,12 @@ public record PostWriter(
     public record WriterGameSummary(
             String tier,
             String division,
-            Double winRate,              // placeholder
-            Double kda,                  // placeholder
-            java.util.List<String> favoriteChampions // placeholder
+            Double winRate,
+            Double kda,
+            Double avgKills, // 피그마 화면에 맞추어서 추가
+            Double avgDeaths,
+            Double avgAssists,
+            java.util.List<String> favoriteChampions
     ) {
     }
 }
