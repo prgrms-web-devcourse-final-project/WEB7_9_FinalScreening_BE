@@ -279,7 +279,7 @@ public class GameAccountService {
 
     /**
      * 게임 계정 삭제 (연동 해제)
-     * 게임 계정 삭제 시 관련된 랭크 정보도 함께 삭제됩니다.
+     * 게임 계정 삭제 시 관련된 랭크 정보, 매치 정보, 선호 챔피언 정보도 함께 삭제됩니다.
      * @param gameAccountId 게임 계정 ID
      * @param userId 인증된 사용자 ID
      */
@@ -292,7 +292,11 @@ public class GameAccountService {
             throw new CustomException(CustomErrorCode.FORBIDDEN_GAME_ACCOUNT);
         }
 
-        // 관련된 랭크 정보 먼저 삭제
+        // 관련된 매치 정보 및 선호 챔피언 정보 먼저 삭제 (외래키 제약조건 때문에)
+        matchService.deleteMatchesByGameAccountId(gameAccountId);
+        log.info("매치 정보 및 선호 챔피언 정보 삭제 완료: gameAccountId={}", gameAccountId);
+
+        // 관련된 랭크 정보 삭제
         rankRepository.findByGameAccount_GameAccountId(gameAccountId).forEach(rank -> {
             rankRepository.delete(rank);
             log.debug("랭크 정보 삭제: rankId={}, queueType={}", rank.getRankId(), rank.getQueueType());
