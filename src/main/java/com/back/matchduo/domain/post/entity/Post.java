@@ -23,8 +23,8 @@ public class Post extends SoftDeletableEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_mode_id", nullable = false)
+    @Enumerated(EnumType.STRING) // DB에는 "SUMMONERS_RIFT" 문자열로 저장됨
+    @Column(name = "game_mode", nullable = false)
     private GameMode gameMode;
 
     @Enumerated(EnumType.STRING)

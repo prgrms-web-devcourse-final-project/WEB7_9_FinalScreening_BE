@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.post.dto.request;
 
+import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.entity.Position;
 import com.back.matchduo.domain.post.entity.QueueType;
 import jakarta.validation.constraints.*;
@@ -8,7 +9,7 @@ import java.util.List;
 
 public record PostCreateRequest(
         @NotNull(message = "게임 모드를 선택해주세요.")
-        Long gameModeId,
+        GameMode gameMode,
 
         @NotNull(message = "큐 타입을 선택해주세요.")
         QueueType queueType,

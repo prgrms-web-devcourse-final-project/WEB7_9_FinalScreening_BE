@@ -10,7 +10,6 @@ import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.entity.Position;
 import com.back.matchduo.domain.post.entity.Post;
 import com.back.matchduo.domain.post.entity.QueueType;
-import com.back.matchduo.domain.post.repository.GameModeRepository;
 import com.back.matchduo.domain.post.repository.PostRepository;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;

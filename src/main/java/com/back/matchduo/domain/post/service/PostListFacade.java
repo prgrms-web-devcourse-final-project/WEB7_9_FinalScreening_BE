@@ -14,7 +14,6 @@ import com.back.matchduo.domain.post.dto.request.PostCreateRequest;
 import com.back.matchduo.domain.post.dto.request.PostUpdateRequest;
 import com.back.matchduo.domain.post.dto.response.*;
 import com.back.matchduo.domain.post.entity.*;
-import com.back.matchduo.domain.post.repository.GameModeRepository;
 import com.back.matchduo.domain.post.repository.PostGameAccountQueryRepository;
 import com.back.matchduo.domain.post.repository.PostListQueryRepository;
 import com.back.matchduo.domain.post.repository.PostPartyQueryRepository;
@@ -40,7 +39,6 @@ import java.util.stream.Collectors;
 public class PostListFacade {
 
     private final PostRepository postRepository;
-    private final GameModeRepository gameModeRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
@@ -61,9 +59,6 @@ public class PostListFacade {
         // 생성 규칙 검증
         postValidator.validateCreate(request);
 
-        // 2) 게임모드
-        GameMode gameMode = gameModeRepository.findById(request.gameModeId())
-                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_MODE_NOT_FOUND));
 
         // lookingPositions 직렬화
         String lookingPositionsJson = serializePositions(request.lookingPositions());
@@ -74,7 +69,7 @@ public class PostListFacade {
         // Post 저장
         Post post = Post.builder()
                 .user(writerRef)
-                .gameMode(gameMode)
+                .gameMode(request.gameMode()) // [변경] Request의 Enum 값을 바로 사용
                 .queueType(request.queueType())
                 .myPosition(request.myPosition())
                 .lookingPositions(lookingPositionsJson)
@@ -166,7 +161,7 @@ public class PostListFacade {
             Integer size,
             PostStatus status,
             QueueType queueType,
-            Long gameModeId,
+            GameMode gameMode,
             String myPositionsCsv,
             String tier,
             Long currentUserId
@@ -185,7 +180,7 @@ public class PostListFacade {
                 pageSize + 1,
                 status,
                 queueType,
-                gameModeId,
+                gameMode,
                 myPositions.isEmpty() ? null : myPositions,
                 normalizedTier
         );
@@ -364,8 +359,7 @@ public class PostListFacade {
 
             dtoList.add(new PostListResponse.PostDto(
                     p.getId(),
-                    p.getGameMode().getId(),
-                    p.getGameMode().getModeCode(),
+                    p.getGameMode().name(), // [변경] .getId() 호출 제거 -> .name() 사용
                     p.getQueueType(),
                     p.getMyPosition(),
                     parsePositions(p.getLookingPositions()),

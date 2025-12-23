@@ -251,27 +251,37 @@ public class PartyService {
             return new MyPartyListResponse(List.of());
         }
 
+        // 1. Post 정보 조회 (더 이상 GameMode를 Fetch Join할 필요 없음)
         List<Long> postIds = myMemberships.stream()
                 .map(pm -> pm.getParty().getPostId())
                 .toList();
 
-        Map<Long, Post> postMap = postRepository.findAllByIdInWithGameMode(postIds).stream()
+        Map<Long, Post> postMap = postRepository.findAllById(postIds).stream()
                 .collect(Collectors.toMap(Post::getId, post -> post));
 
         List<MyPartyListResponse.MyPartyDto> partyDtos = myMemberships.stream()
                 .map(pm -> {
                     Party party = pm.getParty();
                     Post post = postMap.get(party.getPostId());
+
                     String postTitle = (post != null) ? post.getMemo() : "삭제된 게시글입니다.";
-                    String gameModeName = (post != null) ? post.getGameMode().getName() : "Unknown";
-                    Long gameModeId = (post != null) ? post.getGameMode().getId() : null;
+
+                    // [변경] Enum에서 바로 한글 이름 가져오기
+                    String gameModeName = (post != null && post.getGameMode() != null)
+                            ? post.getGameMode().getDescription() // "소환사의 협곡"
+                            : "Unknown";
+
+
+
+                    String queueType = (post != null && post.getQueueType() != null)
+                            ? post.getQueueType().name() : null;
 
                     return MyPartyListResponse.MyPartyDto.of(
                             party.getId(),
-                            gameModeId,
                             party.getPostId(),
                             postTitle,
-                            gameModeName,
+                            gameModeName, // "소환사의 협곡"
+                            queueType,
                             party.getStatus(),
                             pm.getRole(),
                             pm.getJoinedAt()

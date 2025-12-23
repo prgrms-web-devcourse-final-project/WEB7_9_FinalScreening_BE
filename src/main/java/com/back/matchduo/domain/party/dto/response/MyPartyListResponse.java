@@ -11,21 +11,23 @@ public record MyPartyListResponse(
 ) {
     public record MyPartyDto(
             Long partyId,
-            Long gameModeId,
             Long postId,
             String postTitle,
             String gameMode,
+            String queueType,
             PartyStatus status,
             PartyMemberRole myRole,
             LocalDateTime joinedAt
     ) {
-        public static MyPartyDto of(Long partyId,Long gameModeId, Long postId, String postTitle, String gameMode, PartyStatus status, PartyMemberRole myRole, LocalDateTime joinedAt) {
+        public static MyPartyDto of(Long partyId,  Long postId, String postTitle,
+                                    String gameMode, String queueType, // 인자 추가
+                                    PartyStatus status, PartyMemberRole myRole, LocalDateTime joinedAt) {
             return new MyPartyDto(
                     partyId,
-                    gameModeId,
                     postId,
                     postTitle,
                     gameMode,
+                    queueType,
                     status,
                     myRole,
                     joinedAt

@@ -74,7 +74,7 @@ public record ChatRoomSummaryResponse(
                 OtherUserResponse.of(otherUser),
                 LastMessageResponse.of(lastMessage),
                 unreadCount,
-                room.getPost().getGameMode().getName(),
+                room.getPost().getGameMode().name(),
                 room.getPost().getQueueType().name(),
                 room.getPost().getMemo(),
                 room.isActive(),
