@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,9 +29,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
            "AND p.isActive = true " +
            "AND (:cursor IS NULL OR r.id < :cursor) " +
            "ORDER BY r.id DESC")
-    List<ChatRoom> findMyRooms(@Param("userId") Long userId,
-                               @Param("cursor") Long cursor,
-                               Pageable pageable);
+    List<ChatRoom> findMyRooms(
+            @Param("userId") Long userId,
+            @Param("cursor") Long cursor,
+            Pageable pageable);
 
     /** 채팅방 나가기 시 비관적 락 조회 */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -42,17 +44,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT r FROM ChatRoom r " +
            "WHERE r.post.id = :postId " +
            "AND r.sender.id = :senderId")
-    Optional<ChatRoom> findByPostIdAndSenderIdWithLock(
-            @Param("postId") Long postId,
-            @Param("senderId") Long senderId);
+    Optional<ChatRoom> findByPostIdAndSenderIdWithLock(@Param("postId") Long postId, @Param("senderId") Long senderId);
 
     /** WebSocket 구독 시 채팅방 멤버 검증용 */
     @Query("SELECT COUNT(r) > 0 FROM ChatRoom r " +
            "WHERE r.id = :chatRoomId " +
            "AND (r.sender.id = :userId OR r.receiver.id = :userId)")
-    boolean existsByIdAndMember(
-            @Param("chatRoomId") Long chatRoomId,
-            @Param("userId") Long userId);
+    boolean existsByIdAndMember(@Param("chatRoomId") Long chatRoomId, @Param("userId") Long userId);
 
     /** 채팅방 상세 조회 (sender, receiver, post, gameMode 함께 로드 - N+1 방지) */
     @Query("SELECT r FROM ChatRoom r " +
@@ -62,6 +60,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
            "JOIN FETCH p.gameMode " +
            "WHERE r.id = :id")
     Optional<ChatRoom> findByIdWithDetails(@Param("id") Long id);
+
+    /** 양쪽 모두 나간 채팅방 조회 (정리 대상) **/
+    @Query("SELECT r.id FROM ChatRoom r " +
+           "WHERE r.senderLeft = true AND r.receiverLeft = true " +
+           "AND r.updatedAt < :threshold")
+    List<Long> findFullyClosedIdsBefore(@Param("threshold") LocalDateTime threshold);
 
     /**
      * [파티 영입 후보 조회]
