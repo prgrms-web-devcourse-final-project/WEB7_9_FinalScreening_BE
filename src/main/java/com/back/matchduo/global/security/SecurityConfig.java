@@ -53,6 +53,9 @@ public class SecurityConfig {
 
                 // 인가 규칙
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight 요청 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",
