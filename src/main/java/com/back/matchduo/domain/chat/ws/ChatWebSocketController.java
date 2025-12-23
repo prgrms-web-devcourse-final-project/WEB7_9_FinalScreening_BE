@@ -45,9 +45,12 @@ public class ChatWebSocketController {
         ChatMessageSendResponse response = ChatMessageSendResponse.of(message);
 
         // 해당 채팅방 구독자들에게 브로드캐스트
-        messagingTemplate.convertAndSend("/sub/chats/" + chatRoomId, response);
-
-        log.debug("WebSocket 메시지 전송: chatRoomId={}, senderId={}", chatRoomId, userId);
+        try {
+            messagingTemplate.convertAndSend("/sub/chats/" + chatRoomId, response);
+            log.debug("WebSocket 메시지 전송 성공: chatRoomId={}, sender={}", chatRoomId, userId);
+        } catch (Exception e) {
+            log.error("WebSocket 메시지 브로드캐스트 실패: chatRoomId={}, senderId={}, error={}", chatRoomId, userId, e.getMessage());
+        }
     }
 
     private Long extractUserId(Principal principal) {
