@@ -10,7 +10,6 @@ import java.util.List;
 
 public record PostUpdateResponse(
         Long postId,
-        Long gameModeId,
         String gameMode,
         QueueType queueType,
         Position myPosition,
@@ -32,8 +31,7 @@ public record PostUpdateResponse(
                                         List<PostParticipant> participants) {
         return new PostUpdateResponse(
                 post.getId(),
-                post.getGameMode().getId(),
-                post.getGameMode().getModeCode(),
+                post.getGameMode().name(),
                 post.getQueueType(),
                 post.getMyPosition(),
                 lookingPositions,

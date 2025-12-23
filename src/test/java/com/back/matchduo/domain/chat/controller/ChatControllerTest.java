@@ -79,12 +79,12 @@ class ChatControllerTest {
         testPost = mock(Post.class);
         GameMode gameMode = mock(GameMode.class);
         QueueType queueType = QueueType.DUO;
-        given(gameMode.getName()).willReturn("솔로 랭크");
+        given(gameMode.name()).willReturn("솔로 랭크");
         given(testPost.getId()).willReturn(100L);
         given(testPost.getUser()).willReturn(postAuthor);
         given(testPost.getGameMode()).willReturn(gameMode);
         given(testPost.getQueueType()).willReturn(queueType);
-        given(testPost.getStatus()).willReturn(PostStatus.RECRUITING);
+        given(testPost.getStatus()).willReturn(PostStatus.RECRUIT);
         given(testPost.getMemo()).willReturn("테스트 메모");
 
 

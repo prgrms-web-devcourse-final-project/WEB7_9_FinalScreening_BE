@@ -137,4 +137,20 @@ public class PartyController {
 
         return ResponseEntity.ok(ApiResponse.ok("영입 후보 목록을 조회했습니다.", response));
     }
+
+    // 8. 파티원 스스로 나가기
+    @DeleteMapping("/parties/{partyId}/me")
+    @Operation(summary = "파티 나가기(스스로)", description = "파티원(일반 멤버)이 스스로 파티에서 나갑니다.")
+    public ResponseEntity<ApiResponse<PartyMemberLeaveResponse>> leaveParty(
+            @PathVariable Long partyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new CustomException(CustomErrorCode.UNAUTHORIZED_USER);
+        }
+
+        PartyMemberLeaveResponse response = partyService.leaveParty(partyId, userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.ok("파티에서 퇴장했습니다.", response));
+    }
 }

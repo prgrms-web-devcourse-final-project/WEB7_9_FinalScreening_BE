@@ -1,9 +1,6 @@
 package com.back.matchduo.domain.post.repository;
 
-import com.back.matchduo.domain.post.entity.Position;
-import com.back.matchduo.domain.post.entity.Post;
-import com.back.matchduo.domain.post.entity.PostStatus;
-import com.back.matchduo.domain.post.entity.QueueType;
+import com.back.matchduo.domain.post.entity.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +21,12 @@ public class PostListQueryRepository {
             int limitPlusOne,
             PostStatus status,
             QueueType queueType,
-            Long gameModeId,
+            GameMode gameMode,
             List<Position> myPositions, // enum list
             String tier                 // "DIAMOND" 등
     ) {
         StringBuilder jpql = new StringBuilder();
         jpql.append("SELECT DISTINCT p FROM Post p ");
-        jpql.append("JOIN FETCH p.gameMode gm ");
         jpql.append("JOIN FETCH p.user u ");
 
         // tier 필터가 있으면 GameAccount/Rank join
@@ -51,7 +47,7 @@ public class PostListQueryRepository {
         if (queueType != null) {
             jpql.append("AND p.queueType = :queueType ");
         }
-        if (gameModeId != null) {
+        if (gameMode != null) {
             jpql.append("AND gm.id = :gameModeId ");
         }
 
@@ -70,12 +66,12 @@ public class PostListQueryRepository {
         jpql.append("ORDER BY p.id DESC");
 
         TypedQuery<Post> query = em.createQuery(jpql.toString(), Post.class);
-        query.setParameter("finished", PostStatus.FINISHED);
+        query.setParameter("finished", PostStatus.CLOSED);
 
         if (cursor != null) query.setParameter("cursor", cursor);
         if (status != null) query.setParameter("status", status);
         if (queueType != null) query.setParameter("queueType", queueType);
-        if (gameModeId != null) query.setParameter("gameModeId", gameModeId);
+        if (gameMode != null) query.setParameter("gameMode", gameMode);
 
         if (myPositions != null && !myPositions.isEmpty()) {
             query.setParameter("myPositions", myPositions);

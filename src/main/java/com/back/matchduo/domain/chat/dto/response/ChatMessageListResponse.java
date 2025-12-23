@@ -83,7 +83,7 @@ public record ChatMessageListResponse(
                 OtherUserResponse.of(otherUser),
                 new PostSummaryResponse(
                         room.getPost().getId(),
-                        room.getPost().getGameMode().getName(),
+                        room.getPost().getGameMode().name(),
                         room.getPost().getQueueType().name(),
                         room.getPost().getMemo()
                 ),

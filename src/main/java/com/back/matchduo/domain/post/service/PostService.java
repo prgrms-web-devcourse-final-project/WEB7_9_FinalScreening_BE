@@ -8,6 +8,7 @@ import com.back.matchduo.domain.post.dto.response.PostDeleteResponse;
 import com.back.matchduo.domain.post.dto.response.PostListResponse;
 import com.back.matchduo.domain.post.dto.response.PostStatusUpdateResponse;
 import com.back.matchduo.domain.post.dto.response.PostUpdateResponse;
+import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.entity.Post;
 import com.back.matchduo.domain.post.entity.PostStatus;
 import com.back.matchduo.domain.post.entity.QueueType;
@@ -39,12 +40,12 @@ public class PostService {
             Integer size,
             PostStatus status,
             QueueType queueType,
-            Long gameModeId,
+            GameMode gameMode,
             String myPositions,
             String tier,
             Long currentUserId
     ) {
-        return postListFacade.getPostList(cursor, size, status, queueType, gameModeId, myPositions, tier, currentUserId);
+        return postListFacade.getPostList(cursor, size, status, queueType, gameMode, myPositions, tier, currentUserId);
     }
 
     // 모집글 수정
@@ -71,11 +72,11 @@ public class PostService {
     }
 
     // 모집글 단건 조회 (작성자 검증)
-    public PostUpdateResponse getPostDetail(Long postId, Long userId) {
+    public PostUpdateResponse getPostDetail(Long postId,Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
 
-        postValidator.validatePostOwner(post, userId);
+        // postValidator.validatePostOwner(post, userId);
 
         return postListFacade.buildPostDetailForEdit(post);
     }

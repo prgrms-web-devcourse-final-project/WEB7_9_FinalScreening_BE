@@ -3,8 +3,6 @@ package com.back.matchduo;
 import com.back.matchduo.domain.chat.entity.ChatRoom;
 import com.back.matchduo.domain.chat.repository.ChatRoomRepository;
 import com.back.matchduo.domain.post.entity.GameMode;
-import com.back.matchduo.domain.post.repository.GameModeRepository;
-import com.back.matchduo.domain.party.controller.PartyController;
 import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
 import com.back.matchduo.domain.party.entity.Party;
 import com.back.matchduo.domain.party.entity.PartyMember;
@@ -62,9 +60,6 @@ class PartyControllerTest {
     private PostRepository postRepository;
 
     @Autowired
-    private GameModeRepository gameModeRepository;
-
-    @Autowired
     private ChatRoomRepository chatRoomRepository;
 
     private Long testPostId;
@@ -101,8 +96,7 @@ class PartyControllerTest {
         userRepository.save(memberUser);
 
         // 3. 모집글(Post) 생성을 위한 GameMode 저장
-        GameMode gameMode = new GameMode("SOLO_RANK", "솔로랭크", true);
-        gameModeRepository.save(gameMode);
+        GameMode gameMode = GameMode.SUMMONERS_RIFT;
 
         // 4. 모집글(Post) 생성 및 저장
         // memo를 제목으로 사용하므로 "테스트 모집글"이 제목이 됨
@@ -420,8 +414,7 @@ class PartyControllerTest {
         void success() throws Exception {
             // given
             // 1. [추가 데이터 생성] leaderUser가 MEMBER로 참여할 '두 번째 파티' 생성
-            GameMode flexMode = new GameMode("Flex", "자유랭크", true);
-            gameModeRepository.save(flexMode);
+            GameMode flexMode = GameMode.SUMMONERS_RIFT;
 
             // 2. 두 번째 모집글 생성 (memo를 제목으로 사용)
             Post secondPost = Post.builder()
@@ -630,7 +623,7 @@ class PartyControllerTest {
             // 새로운 모집글 생성 (채팅 기록 없음)
             Post newPost = Post.builder()
                     .user(leaderUser)
-                    .gameMode(gameModeRepository.findAll().get(0))
+                    .gameMode(GameMode.SUMMONERS_RIFT) // [변경] Enum 상수 직접 사용
                     .queueType(QueueType.DUO)
                     .myPosition(Position.ADC)
                     .lookingPositions("[\"SUPPORT\"]")

@@ -8,6 +8,7 @@ import com.back.matchduo.domain.post.dto.response.PostDeleteResponse;
 import com.back.matchduo.domain.post.dto.response.PostListResponse;
 import com.back.matchduo.domain.post.dto.response.PostStatusUpdateResponse;
 import com.back.matchduo.domain.post.dto.response.PostUpdateResponse;
+import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.entity.PostStatus;
 import com.back.matchduo.domain.post.entity.QueueType;
 import com.back.matchduo.domain.post.service.PostService;
@@ -45,7 +46,7 @@ public class PostController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) PostStatus status,
             @RequestParam(required = false) QueueType queueType,
-            @RequestParam(required = false) Long gameModeId,
+            @RequestParam(required = false)GameMode gameMode,
             @RequestParam(required = false) String myPositions,
             @RequestParam(required = false) String tier
     ) {
@@ -56,7 +57,7 @@ public class PostController {
             // 비로그인 허용
         }
 
-        return postService.getPostList(cursor, size, status, queueType, gameModeId, myPositions, tier, currentUserId);
+        return postService.getPostList(cursor, size, status, queueType, gameMode, myPositions, tier, currentUserId);
     }
 
     // 모집글 수정 (작성자만)
@@ -83,7 +84,7 @@ public class PostController {
 
     // 모집글 단건 조회 (작성자 검증)
     @GetMapping("/{postId}")
-    @Operation(summary = "모집글 단건 조회 (수정용)", description = "작성자 검증 후 수정 화면에 필요한 모집글 전체 정보를 조회합니다.")
+    @Operation(summary = "모집글 단건 조회", description = "모집글 전체 정보를 조회합니다.")
     public PostUpdateResponse getPostDetail(
             @PathVariable Long postId
     ) {

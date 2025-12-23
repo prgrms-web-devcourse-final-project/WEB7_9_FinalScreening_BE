@@ -49,6 +49,8 @@ public enum CustomErrorCode {
     ALREADY_JOINED_PARTY(HttpStatus.BAD_REQUEST, "이미 참여 중인 파티입니다."),
     PARTY_MEMBER_NOT_MATCH(HttpStatus.BAD_REQUEST, "해당 파티 소속이 아닙니다."),
     CANNOT_KICK_LEADER(HttpStatus.BAD_REQUEST, "파티장은 스스로 강퇴할 수 없습니다."),
+    LEADER_CANNOT_LEAVE(HttpStatus.BAD_REQUEST, "파티장은 스스로 나갈 수 없습니다."),
+    PARTY_ALREADY_LEFT(HttpStatus.BAD_REQUEST, "이미 나간 파티입니다."),
 
 
 

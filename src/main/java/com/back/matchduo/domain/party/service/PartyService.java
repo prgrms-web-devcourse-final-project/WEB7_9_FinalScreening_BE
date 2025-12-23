@@ -7,6 +7,7 @@ import com.back.matchduo.domain.party.entity.*;
 import com.back.matchduo.domain.party.repository.PartyMemberRepository;
 import com.back.matchduo.domain.party.repository.PartyRepository;
 import com.back.matchduo.domain.post.entity.Post;
+import com.back.matchduo.domain.post.entity.PostStatus;
 import com.back.matchduo.domain.post.repository.PostRepository;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;
@@ -32,6 +33,7 @@ public class PartyService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final ChatRoomRepository chatRoomRepository;
+
 
     public PartyByPostResponse getPartyByPostId(Long postId, Long currentUserId) {
         // 1. 파티 정보 조회
@@ -249,27 +251,37 @@ public class PartyService {
             return new MyPartyListResponse(List.of());
         }
 
+        // 1. Post 정보 조회 (더 이상 GameMode를 Fetch Join할 필요 없음)
         List<Long> postIds = myMemberships.stream()
                 .map(pm -> pm.getParty().getPostId())
                 .toList();
 
-        Map<Long, Post> postMap = postRepository.findAllByIdInWithGameMode(postIds).stream()
+        Map<Long, Post> postMap = postRepository.findAllById(postIds).stream()
                 .collect(Collectors.toMap(Post::getId, post -> post));
 
         List<MyPartyListResponse.MyPartyDto> partyDtos = myMemberships.stream()
                 .map(pm -> {
                     Party party = pm.getParty();
                     Post post = postMap.get(party.getPostId());
+
                     String postTitle = (post != null) ? post.getMemo() : "삭제된 게시글입니다.";
-                    String gameModeName = (post != null) ? post.getGameMode().getName() : "Unknown";
-                    Long gameModeId = (post != null) ? post.getGameMode().getId() : null;
+
+                    // [변경] Enum에서 바로 한글 이름 가져오기
+                    String gameModeName = (post != null && post.getGameMode() != null)
+                            ? post.getGameMode().getDescription() // "소환사의 협곡"
+                            : "Unknown";
+
+
+
+                    String queueType = (post != null && post.getQueueType() != null)
+                            ? post.getQueueType().name() : null;
 
                     return MyPartyListResponse.MyPartyDto.of(
                             party.getId(),
-                            gameModeId,
                             party.getPostId(),
                             postTitle,
-                            gameModeName,
+                            gameModeName, // "소환사의 협곡"
+                            queueType,
                             party.getStatus(),
                             pm.getRole(),
                             pm.getJoinedAt()
@@ -297,10 +309,53 @@ public class PartyService {
         // 상태 변경 (RECRUIT or ACTIVE -> CLOSED)
         party.closeParty();
 
+        Post post = postRepository.findById(party.getPostId())
+                .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
+
+        post.updateStatus(PostStatus.CLOSED);
+
         return new PartyCloseResponse(
                 party.getId(),
                 party.getStatus().name(),
                 party.getClosedAt()
         );
+    }
+
+
+    // 파티원 스스로 탈퇴
+    @Transactional
+    public PartyMemberLeaveResponse leaveParty(Long partyId, Long currentUserId) {
+        // 1. 파티 조회
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.PARTY_NOT_FOUND));
+
+        // 2. 파티장은 탈퇴 불가 (파티 종료를 이용해야 함)
+        if (party.getLeaderId().equals(currentUserId)) {
+            throw new CustomException(CustomErrorCode.LEADER_CANNOT_LEAVE); // 에러 코드 정의 필요
+        }
+
+        // 3. 멤버 조회 (내 정보)
+        PartyMember member = partyMemberRepository.findByPartyIdAndUserId(partyId, currentUserId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.PARTY_MEMBER_NOT_FOUND));
+
+        // 이미 나간 상태인지 확인
+        if (member.getState() != PartyMemberState.JOINED) {
+            throw new CustomException(CustomErrorCode.PARTY_ALREADY_LEFT); // 에러 코드 정의 필요
+        }
+
+        // 4. 탈퇴 처리 (State -> LEFT)
+        member.leaveParty();
+
+        // 5. 파티 상태 및 게시글 상태 동기화 (ACTIVE -> RECRUIT)
+        // 인원이 꽉 차서 ACTIVE 상태였다가, 한 명이 나가서 자리가 비게 된 경우
+        if (party.getStatus() == PartyStatus.ACTIVE) {
+            party.downgradeToRecruit(); // 파티 상태 변경
+
+            // [중요] 게시글(Post) 상태도 모집 중으로 변경하여 목록에 다시 노출
+            postRepository.findById(party.getPostId())
+                    .ifPresent(post -> post.updateStatus(PostStatus.RECRUIT));
+        }
+
+        return PartyMemberLeaveResponse.of(partyId, member.getId());
     }
 }

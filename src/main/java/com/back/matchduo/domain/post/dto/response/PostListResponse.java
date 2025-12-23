@@ -14,7 +14,6 @@ public record PostListResponse(
 ) {
     public record PostDto(
             Long postId,
-            Long gameModeId,
             String gameMode,
             QueueType queueType,
             Position myPosition,
