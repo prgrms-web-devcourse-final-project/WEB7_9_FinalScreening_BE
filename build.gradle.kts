@@ -61,6 +61,10 @@ dependencies {
     implementation("org.springframework.security:spring-security-messaging")
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Redis
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
 }
 
 tasks.withType<Test> {
