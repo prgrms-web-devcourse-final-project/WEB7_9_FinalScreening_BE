@@ -36,4 +36,16 @@ public class UserLoginController {
         userLoginService.logout(request, response);
         return ResponseEntity.ok().build();
     }
+
+    //회원 탈퇴 기능
+    @PostMapping("/resign")
+    public ResponseEntity<UserLoginResponse> resign(
+            @RequestAttribute("userId")
+            Long userId, // [참고] 인증 필터에서 설정한 유저 PK
+
+            HttpServletResponse response
+    ){
+        userLoginService.resign(userId, response);
+        return ResponseEntity.noContent().build();
+    }
 }

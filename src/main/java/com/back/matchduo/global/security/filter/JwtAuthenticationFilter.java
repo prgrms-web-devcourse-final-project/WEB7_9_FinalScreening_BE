@@ -56,6 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     null,
                                     userDetails.getAuthorities()
                             );
+                    //컨트롤러의 @RequestAttribute("userId")가 이 값을 인식할 수 있게 저장합니다.
+                    request.setAttribute("userId", userId);
 
                     // SecurityContext에 인증 정보 저장
                     SecurityContextHolder.getContext().setAuthentication(authentication);
