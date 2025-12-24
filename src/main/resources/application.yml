@@ -51,7 +51,6 @@ custom:
     refreshExpireSeconds: 1209600
   cookie:
     secure: false
-    sameSite: Lax
     path: /
 
 riot:
