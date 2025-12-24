@@ -20,7 +20,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     /** 내 채팅방 목록 조회 (커서 기반 페이징, N+1 방지용 JOIN FETCH) */
     @Query("SELECT r FROM ChatRoom r " +
            "JOIN FETCH r.post p " +
-           "JOIN FETCH p.gameMode " +
            "JOIN FETCH r.receiver JOIN FETCH r.sender " +
            "WHERE (" +
            "    (r.sender.id = :userId AND r.senderLeft = false) OR " +
@@ -52,12 +51,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
            "AND (r.sender.id = :userId OR r.receiver.id = :userId)")
     boolean existsByIdAndMember(@Param("chatRoomId") Long chatRoomId, @Param("userId") Long userId);
 
-    /** 채팅방 상세 조회 (sender, receiver, post, gameMode 함께 로드 - N+1 방지) */
+    /** 채팅방 상세 조회 (sender, receiver, post 함께 로드 - N+1 방지) */
     @Query("SELECT r FROM ChatRoom r " +
            "JOIN FETCH r.sender " +
            "JOIN FETCH r.receiver " +
            "JOIN FETCH r.post p " +
-           "JOIN FETCH p.gameMode " +
            "WHERE r.id = :id")
     Optional<ChatRoom> findByIdWithDetails(@Param("id") Long id);
 
