@@ -15,7 +15,7 @@ public class PostListQueryRepository {
 
     private final EntityManager em;
 
-    // 목록 조회: 필터 + cursor + FINISHED 제외
+    // 목록 조회: 필터 + cursor + FINISHED 제외 + 벤 필터링
     public List<Post> findPosts(
             Long cursor,
             int limitPlusOne,
@@ -23,7 +23,8 @@ public class PostListQueryRepository {
             QueueType queueType,
             GameMode gameMode,
             List<Position> myPositions, // enum list
-            String tier                 // "DIAMOND" 등
+            String tier,                // "DIAMOND" 등
+            List<Long> bannedUserIds    // 벤된 유저 ID 목록 (null이거나 빈 리스트면 필터링 안 함)
     ) {
         StringBuilder jpql = new StringBuilder();
         jpql.append("SELECT DISTINCT p FROM Post p ");
@@ -63,6 +64,11 @@ public class PostListQueryRepository {
             jpql.append("AND r.tier = :tier ");
         }
 
+        // 벤 필터링: 벤된 유저의 모집글 제외 (빈 리스트면 조건 추가 안 함)
+        if (bannedUserIds != null && !bannedUserIds.isEmpty()) {
+            jpql.append("AND u.id NOT IN :bannedUserIds ");
+        }
+
         jpql.append("ORDER BY p.id DESC");
 
         TypedQuery<Post> query = em.createQuery(jpql.toString(), Post.class);
@@ -81,6 +87,10 @@ public class PostListQueryRepository {
             query.setParameter("lolType", "LEAGUE_OF_LEGENDS");
             query.setParameter("soloQueueType", "RANKED_SOLO_5x5");
             query.setParameter("tier", tier);
+        }
+
+        if (bannedUserIds != null && !bannedUserIds.isEmpty()) {
+            query.setParameter("bannedUserIds", bannedUserIds);
         }
 
         query.setMaxResults(limitPlusOne);

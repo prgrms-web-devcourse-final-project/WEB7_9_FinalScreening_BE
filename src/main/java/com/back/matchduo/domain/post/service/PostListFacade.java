@@ -19,6 +19,7 @@ import com.back.matchduo.domain.post.repository.PostListQueryRepository;
 import com.back.matchduo.domain.post.repository.PostPartyQueryRepository;
 import com.back.matchduo.domain.post.repository.PostRepository;
 import com.back.matchduo.domain.user.entity.User;
+import com.back.matchduo.domain.user.repository.UserBanRepository;
 import com.back.matchduo.domain.user.repository.UserRepository;
 import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
@@ -40,6 +41,7 @@ public class PostListFacade {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final UserBanRepository userBanRepository;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
 
@@ -174,6 +176,12 @@ public class PostListFacade {
         // tier normalize
         String normalizedTier = (tier == null || tier.isBlank()) ? null : tier.trim().toUpperCase();
 
+        // 벤된 유저 ID 목록 조회 (currentUserId가 null이면 빈 리스트)
+        List<Long> bannedUserIds = List.of();
+        if (currentUserId != null) {
+            bannedUserIds = userBanRepository.findBannedUserIds(currentUserId);
+        }
+
         // Post 목록 1번 조회 (size + 1)
         List<Post> posts = postListQueryRepository.findPosts(
                 cursor,
@@ -182,7 +190,8 @@ public class PostListFacade {
                 queueType,
                 gameMode,
                 myPositions.isEmpty() ? null : myPositions,
-                normalizedTier
+                normalizedTier,
+                bannedUserIds.isEmpty() ? null : bannedUserIds
         );
 
         boolean hasNext = posts.size() > pageSize;
