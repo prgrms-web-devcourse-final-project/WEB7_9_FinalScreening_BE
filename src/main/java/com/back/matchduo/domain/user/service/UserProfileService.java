@@ -32,7 +32,7 @@ public class UserProfileService {
     }
 
     // 닉네임 수정
-    private final List<String> bannedWords = List.of("씨발", "시발", "병신", "좆", "fuck");
+    private final List<String> bannedWords = List.of("씨발", "시발", "병신", "좆", "fuck", "ㅗ");
 
     public void updateNickname(User user, String nickname) {
         //공백 및 Null 체크
