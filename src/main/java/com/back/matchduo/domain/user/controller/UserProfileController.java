@@ -1,7 +1,8 @@
 package com.back.matchduo.domain.user.controller;
 
-import com.back.matchduo.domain.user.dto.request.UserProfileRequest;
-import com.back.matchduo.domain.user.dto.request.UserUpdateRequest;
+import com.back.matchduo.domain.user.dto.request.UserUpdateCommentRequest;
+import com.back.matchduo.domain.user.dto.request.UserUpdateNicknameRequest;
+import com.back.matchduo.domain.user.dto.request.UserUpdatePasswordRequest;
 import com.back.matchduo.domain.user.dto.response.UserProfileResponse;
 import com.back.matchduo.domain.user.service.UserProfileService;
 import com.back.matchduo.global.exeption.CustomErrorCode;
@@ -33,7 +34,7 @@ public class UserProfileController {
     @PatchMapping("/nickname")
     public ResponseEntity<Void> updateNickname(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdateRequest request) {
+            @Valid @RequestBody UserUpdateNicknameRequest request) {
         userProfileService.updateNickname(userDetails.getUser(), request.nickname());
         return ResponseEntity.ok().build();
     }
@@ -42,7 +43,7 @@ public class UserProfileController {
     @PatchMapping("/comment")
     public ResponseEntity<Void> updateComment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdateRequest request) {
+            @Valid @RequestBody UserUpdateCommentRequest request) {
         userProfileService.updateComment(userDetails.getUser(), request.comment());
         return ResponseEntity.ok().build();
     }
@@ -51,7 +52,7 @@ public class UserProfileController {
     @PatchMapping("/password")
     public ResponseEntity<Void> updatePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody UserUpdateRequest request) {
+            @Valid @RequestBody UserUpdatePasswordRequest request) {
         userProfileService.updatePassword(userDetails.getUser(), request);
         return ResponseEntity.ok().build();
     }

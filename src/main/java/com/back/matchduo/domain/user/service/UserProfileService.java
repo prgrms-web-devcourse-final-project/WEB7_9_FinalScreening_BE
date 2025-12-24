@@ -1,7 +1,6 @@
 package com.back.matchduo.domain.user.service;
 
-import com.back.matchduo.domain.user.dto.request.UserProfileRequest;
-import com.back.matchduo.domain.user.dto.request.UserUpdateRequest;
+import com.back.matchduo.domain.user.dto.request.UserUpdatePasswordRequest;
 import com.back.matchduo.domain.user.dto.response.UserProfileResponse;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;
@@ -39,7 +38,7 @@ public class UserProfileService {
     }
 
     //비밀번호 변경 처리
-    public void updatePassword(User user, UserUpdateRequest request) {
+    public void updatePassword(User user, UserUpdatePasswordRequest request) {
         User currentUser = findUser(user.getId());
         //비밀번호 조건 미완료
         if (isBlank(request.password()) || isBlank(request.newPassword()) || isBlank(request.newPasswordConfirm())) {
