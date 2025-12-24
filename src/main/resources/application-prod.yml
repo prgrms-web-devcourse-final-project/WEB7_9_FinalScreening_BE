@@ -26,7 +26,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: false
@@ -50,8 +50,8 @@ custom:
 
   jwt:
     secretPattern: ${JWT_SECRET}
-    accessExpireSeconds: 1209600
-    refreshExpireSeconds: 1209600
+    accessExpireSeconds: 3600
+    refreshExpireSeconds: 604800
 
   cookie:
     secure: true
