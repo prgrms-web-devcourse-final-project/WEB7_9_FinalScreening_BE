@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -30,9 +32,36 @@ public class UserProfileService {
     }
 
     // 닉네임 수정
+    private final List<String> bannedWords = List.of("씨발", "시발", "병신", "좆", "fuck");
+
     public void updateNickname(User user, String nickname) {
-        if (nickname == null || nickname.isBlank()) throw new CustomException(CustomErrorCode.INVALID_REQUEST);
+        //공백 및 Null 체크
+        if (nickname == null || nickname.trim().isEmpty()) {
+            throw new CustomException(CustomErrorCode.INVALID_NICKNAME_FORMAT);
+        }
+
+        //한글, 영어, 숫자 포함 2~8자 검사
+        String nicknameRegex = "^[가-힣a-zA-Z0-9]{2,8}$";
+        if (!nickname.matches(nicknameRegex)) {
+            throw new CustomException(CustomErrorCode.INVALID_NICKNAME_FORMAT);
+        }
+
+        //비속어 체크
+        String lowerNickname = nickname.toLowerCase();
+        for (String banned : bannedWords) {
+            // 비교 대상 비속어도 소문자로 변환하여 포함 여부 확인
+            if (lowerNickname.contains(banned.toLowerCase())) {
+                throw new CustomException(CustomErrorCode.BANNED_WORD_INCLUDED);
+            }
+        }
+
         User currentUser = findUser(user.getId());
+
+        // 4. 중복 체크 (선택 사항: 이미 존재하는 닉네임인지 확인)
+        if (userRepository.existsByNickname(nickname)) {
+            throw new CustomException(CustomErrorCode.DUPLICATE_NICKNAME);
+        }
+
         currentUser.setNickname(nickname);
     }
 

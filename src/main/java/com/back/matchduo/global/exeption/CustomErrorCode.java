@@ -33,6 +33,9 @@ public enum CustomErrorCode {
     PASSWORD_SHORTAGE(HttpStatus.BAD_REQUEST, "비밀번호 변경을 위해 모든 비밀번호 조건을 만족해야 합니다."),
     PASSWORD_INCONSISTENCY(HttpStatus.BAD_REQUEST, "새 비밀번호가 일치하지 않습니다."),
     WRONG_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
+    INVALID_NICKNAME_FORMAT(HttpStatus.BAD_REQUEST, "닉네임은 2~8자의 한글, 영어, 숫자만 가능합니다."),
+    BANNED_WORD_INCLUDED(HttpStatus.BAD_REQUEST, "닉네임에 비속어를 사용할 수 없습니다."),
+    DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "그 닉네임은 이미 존재합니다."),
     BAN_MYSELF(HttpStatus.BAD_REQUEST, "자신을 차단할 수 없습니다."),
     NOT_BANNED(HttpStatus.BAD_REQUEST, "차단 내역이 없습니다."),
 

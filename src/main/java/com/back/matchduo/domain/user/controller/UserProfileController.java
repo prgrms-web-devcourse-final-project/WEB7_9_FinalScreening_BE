@@ -34,7 +34,7 @@ public class UserProfileController {
     @PatchMapping("/nickname")
     public ResponseEntity<Void> updateNickname(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdateNicknameRequest request) {
+            @RequestBody UserUpdateNicknameRequest request) {
         userProfileService.updateNickname(userDetails.getUser(), request.nickname());
         return ResponseEntity.ok().build();
     }
