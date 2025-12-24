@@ -58,10 +58,6 @@ public class User extends BaseEntity {
         this.comment = comment;
     }
 
-    public void setProfile_image(String profileImage) {
-        this.profileImage = profileImage;
-    }
-
     public void updateProfileImage(String profileImage) {
         this.profileImage = profileImage;
     }

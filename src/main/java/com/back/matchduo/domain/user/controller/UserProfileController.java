@@ -34,7 +34,7 @@ public class UserProfileController {
     @PatchMapping("/nickname")
     public ResponseEntity<Void> updateNickname(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdateNicknameRequest request) {
+            @RequestBody UserUpdateNicknameRequest request) {
         userProfileService.updateNickname(userDetails.getUser(), request.nickname());
         return ResponseEntity.ok().build();
     }
@@ -52,7 +52,7 @@ public class UserProfileController {
     @PatchMapping("/password")
     public ResponseEntity<Void> updatePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdatePasswordRequest request) {
+            @RequestBody UserUpdatePasswordRequest request) {
         userProfileService.updatePassword(userDetails.getUser(), request);
         return ResponseEntity.ok().build();
     }

@@ -1,15 +1,17 @@
 package com.back.matchduo.domain.user.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record UserUpdatePasswordRequest(
-        @NotBlank
+        // //수정한 부분
+        @Schema(description = "현재 비밀번호", defaultValue = "string", example = "string")
         String password,
 
-        @NotBlank
+        @Schema(description = "새 비밀번호", defaultValue = "string", example = "string")
         String newPassword,
 
-        @NotBlank
+        @Schema(description = "새 비밀번호 확인", defaultValue = "string", example = "string")
         String newPasswordConfirm
+        // //수정한 부분
 ) {
 }

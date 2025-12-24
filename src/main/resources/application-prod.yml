@@ -43,6 +43,8 @@ logging:
     org.springframework.transaction.interceptor: WARN
 
 custom:
+  base-url: http://localhost:8080 #프로필 이미지 등 서버 접근용 BASE URL
+
   site:
     domain: "${custom.prod.domain}"
     backUrl: "${custom.prod.backUrl}"
