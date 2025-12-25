@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
-@Profile({"dev", "test"}) //[수정] prod 제외 → S3랑 충돌 방지
+@Profile({"dev", "test"}) //prod 제외 → S3랑 충돌 방지
 public class FileService {
 
     //하드코딩 경로 제거 / 명확한 업로드 루트
