@@ -19,7 +19,7 @@ public class UserSearchGameAccountQueryRepository {
         return em.createQuery(
                         "SELECT ga FROM GameAccount ga " +
                                 "JOIN FETCH ga.user u " +
-                                "WHERE u.id IN :ids AND ga.gameType = 'LEAGUE_OF_LEGENDS'",
+                                "WHERE u.id IN :ids AND ga.gameType IN ('LEAGUE_OF_LEGENDS', '리그 오브 레전드')",
                         GameAccount.class
                 )
                 .setParameter("ids", userIds)
