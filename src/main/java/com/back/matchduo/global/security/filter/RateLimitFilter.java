@@ -46,7 +46,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             Bucket bucket = buckets.computeIfAbsent(clientIp, this::createLoginBucket);
 
             if (!bucket.tryConsume(1)) {
-                log.warn("Rate limit exceeded for IP: {}", clientIp);
+                log.warn("로그인 요청 횟수 초과 - IP: {}", clientIp);
                 sendRateLimitResponse(response);
                 return;
             }
