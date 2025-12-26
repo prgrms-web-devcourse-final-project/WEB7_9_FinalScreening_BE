@@ -65,6 +65,16 @@ dependencies {
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    // Rate Limiting
+    implementation("com.bucket4j:bucket4j-core:8.7.0")
+
+    // AWS S3
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.777")
+
+    // Flyway
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
+
 }
 
 tasks.withType<Test> {
