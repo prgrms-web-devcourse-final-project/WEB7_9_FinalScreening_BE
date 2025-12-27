@@ -115,12 +115,9 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "리뷰비율 조회 성공")
     @GetMapping("/users/{userId}/distribution")
     public ResponseEntity<ReviewDistributionResponse> getReviewDistribution(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable Long userId
     ) {
-        Long currentUserId = null;
-        if (userDetails != null) currentUserId = userDetails.getId();
-
-        ReviewDistributionResponse response = reviewService.getReviewDistribution(currentUserId);
+        ReviewDistributionResponse response = reviewService.getReviewDistribution(userId);
 
         return ResponseEntity.ok(response);
     }
