@@ -65,6 +65,8 @@ dependencies {
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    //S3
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.701")
 }
 
 tasks.withType<Test> {
