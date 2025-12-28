@@ -121,4 +121,14 @@ public class ReviewController {
 
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "모든 리뷰 조회", description = "모든 유저가 받은 리뷰 통합 조회")
+    @ApiResponse(responseCode = "200", description = "리뷰 통합 조회 성공")
+    @GetMapping
+    public ResponseEntity<List<ReviewListResponse>> getAllReviews(
+    ) {
+        List<ReviewListResponse> responses = reviewService.getAllReviews();
+
+        return ResponseEntity.ok(responses);
+    }
 }
