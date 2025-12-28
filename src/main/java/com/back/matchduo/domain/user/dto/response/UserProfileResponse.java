@@ -34,15 +34,13 @@ public record UserProfileResponse(
         LocalDateTime nicknameUpdatedAt
 ) {
 
-    public static UserProfileResponse from(User user, String baseUrl) {
-        String fullProfileImage = user.getProfileImage() == null
-                ? null
-                : baseUrl + user.getProfileImage();
+    public static UserProfileResponse from(User user) {
+        String profileImage = user.getProfileImage();
 
         return new UserProfileResponse(
                 user.getId(),
                 user.getEmail(),
-                fullProfileImage,
+                profileImage,
                 user.getNickname(),
                 user.getComment(),
                 user.getNicknameUpdatedAt()

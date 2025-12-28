@@ -21,14 +21,12 @@ import java.util.List;
 public class UserProfileService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
-    private final BaseUrlProperties baseUrlProperties;
 
     public UserProfileResponse getProfile(User user) {
         User currentUser = findUser(user.getId());
 
         return UserProfileResponse.from(
-                currentUser,
-                baseUrlProperties.getBaseUrl() // 수정한 부분
+                currentUser
         );
     }
 
