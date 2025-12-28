@@ -1,6 +1,6 @@
 package com.back.matchduo.domain.review.entity;
 
-import com.back.matchduo.domain.post.entity.Post;
+import com.back.matchduo.domain.party.entity.Party;
 import com.back.matchduo.domain.review.enums.ReviewEmoji;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.global.entity.SoftDeletableEntity;
@@ -9,16 +9,18 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("is_active = true")
 @Table(
         name = "review",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_review_reviewer_reviewee_post",
-                        columnNames = {"reviewer_id", "reviewee_id", "post_id"}
+                        name = "uk_review_reviewer_reviewee_party",
+                        columnNames = {"reviewer_id", "reviewee_id", "party_id"}
                 )
         }
 )
@@ -30,8 +32,8 @@ public class Review extends SoftDeletableEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+    @JoinColumn(name = "party_id", nullable = false)
+    private Party party;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
@@ -54,9 +56,9 @@ public class Review extends SoftDeletableEntity {
     private String content = "";
 
     @Builder
-    public Review(Post post, User reviewer, User reviewee, ReviewRequest reviewRequest, ReviewEmoji emoji, String content) {
+    public Review(Party party, User reviewer, User reviewee, ReviewRequest reviewRequest, ReviewEmoji emoji, String content) {
         validateSelfReview(reviewer, reviewee);
-        this.post = post;
+        this.party = party;
         this.reviewer = reviewer;
         this.reviewee = reviewee;
         this.reviewRequest = reviewRequest;

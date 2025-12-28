@@ -1,6 +1,6 @@
 package com.back.matchduo.domain.review.entity;
 
-import com.back.matchduo.domain.post.entity.Post;
+import com.back.matchduo.domain.party.entity.Party;
 import com.back.matchduo.domain.review.enums.ReviewRequestStatus;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.global.entity.SoftDeletableEntity;
@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
         name = "review_request",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_review_request_post_user",
-                        columnNames = {"post_id", "request_user_id"}
+                        name = "uk_review_request_party_user",
+                        columnNames = {"party_id", "request_user_id"}
                 )
         }
 )
@@ -32,8 +32,8 @@ public class ReviewRequest extends SoftDeletableEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+    @JoinColumn(name = "party_id", nullable = false)
+    private Party party;
 
     // 리뷰를 작성해야 하는 사람
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,8 +48,8 @@ public class ReviewRequest extends SoftDeletableEntity {
     private LocalDateTime expiresAt;
 
     @Builder
-    public ReviewRequest(Post post, User requestUser) {
-        this.post = post;
+    public ReviewRequest(Party party, User requestUser) {
+        this.party = party;
         this.requestUser = requestUser;
         this.status = ReviewRequestStatus.PENDING;
         this.expiresAt = LocalDateTime.now().plusHours(6);
