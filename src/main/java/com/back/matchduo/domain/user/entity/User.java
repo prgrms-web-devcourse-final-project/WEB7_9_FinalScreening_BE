@@ -4,6 +4,8 @@ import com.back.matchduo.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Builder
@@ -33,6 +35,10 @@ public class User extends BaseEntity {
     @Column(name = "verification_code", length = 100, nullable = true)
     private String verificationCode;
 
+    private LocalDateTime nicknameUpdatedAt;
+
+
+
     public static User createUser(String email, String password, String nickname) {
         return User.builder()
                 .email(email)
@@ -60,5 +66,9 @@ public class User extends BaseEntity {
 
     public void updateProfileImage(String profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public void setNicknameUpdatedAt(LocalDateTime nicknameUpdatedAt) {
+        this.nicknameUpdatedAt = nicknameUpdatedAt;
     }
 }

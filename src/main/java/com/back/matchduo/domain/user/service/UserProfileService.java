@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -62,7 +63,11 @@ public class UserProfileService {
             throw new CustomException(CustomErrorCode.DUPLICATE_NICKNAME);
         }
 
+        //닉네임 저장
         currentUser.setNickname(nickname);
+
+        //닉네임 최근 수정 시각 저장
+        currentUser.setNicknameUpdatedAt(LocalDateTime.now());
     }
 
     // 자기소개 수정
