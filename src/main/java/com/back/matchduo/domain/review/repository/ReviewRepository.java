@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    boolean existsByPostIdAndReviewerIdAndRevieweeId(Long postId, Long reviewerId, Long revieweeId);
+    boolean existsByPartyIdAndReviewerIdAndRevieweeId(Long partyId, Long reviewerId, Long revieweeId);
 
     Optional<Review> findByIdAndReviewerId(Long reviewId, Long reviewerId);
 
@@ -32,5 +32,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "GROUP BY r.emoji")
     List<Object[]> countReviewEmojisByRevieweeId(@Param("userId") Long userId);
 
-    long countByPostIdAndReviewerId(Long postId, Long userId);
+    long countByPartyIdAndReviewerId(Long partyId, Long userId);
 }

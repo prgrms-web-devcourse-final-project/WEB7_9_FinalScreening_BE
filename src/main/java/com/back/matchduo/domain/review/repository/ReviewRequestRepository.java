@@ -5,7 +5,6 @@ import com.back.matchduo.domain.review.enums.ReviewRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,23 +12,15 @@ import java.util.Optional;
 
 public interface ReviewRequestRepository extends JpaRepository<ReviewRequest, Long> {
 
-    Optional<ReviewRequest> findByPostIdAndRequestUserId(Long postId, Long userId);
+    Optional<ReviewRequest> findByPartyIdAndRequestUserId(Long partyId, Long userId);
 
     List<ReviewRequest> findByRequestUserIdAndStatusAndIsActiveTrue(Long userId, ReviewRequestStatus reviewRequestStatus);
 
     @Modifying
-    @Query("DELETE FROM ReviewRequest rr WHERE rr.post.id = :postId")
-    void deleteAllByPostIdHard(@Param("postId") Long postId);
+    @Query("DELETE FROM ReviewRequest r WHERE r.party.id = :partyId AND r.status = :status")
+    void deleteByPartyIdAndStatus(Long partyId, ReviewRequestStatus reviewRequestStatus);
 
-    @Query("SELECT rr FROM ReviewRequest rr " +
-            "JOIN FETCH rr.post p " +
-            "WHERE rr.requestUser.id = :userId " +
-            "AND rr.status = :status " +  // [핵심 변경] 상태 조건 추가
-            "ORDER BY rr.createdAt DESC")
-    List<ReviewRequest> findMyRequestsByStatus(
-            @Param("userId") Long userId,
-            @Param("status") ReviewRequestStatus status
-    );
+    boolean existsByPartyId(Long partyId);
 
-    void deleteByPostIdAndStatus(Long postId, ReviewRequestStatus reviewRequestStatus);
+    List<ReviewRequest> findAllByPartyIdAndStatus(Long partyId, ReviewRequestStatus reviewRequestStatus);
 }
