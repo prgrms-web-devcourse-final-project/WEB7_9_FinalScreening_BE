@@ -6,8 +6,10 @@ import com.back.matchduo.domain.party.entity.PartyStatus;
 import com.back.matchduo.domain.party.repository.PartyRepository;
 import com.back.matchduo.domain.post.entity.PostStatus;
 import com.back.matchduo.domain.post.repository.PostRepository;
+import com.back.matchduo.domain.review.event.PartyStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ import java.util.List;
 public class PartyScheduler {
     private final PartyRepository partyRepository;
     private final PostRepository postRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Scheduled(cron = "0 * * * * *") // 매 분 0초마다 실행 (1분 주기)
     @Transactional
@@ -37,10 +40,15 @@ public class PartyScheduler {
 
         // 2. 파티 종료 처리 (Entity 메서드 활용)
         for (Party party : expiredParties){
+            PartyStatus prevStatus = party.getStatus();
             party.expireParty(); // 상태를 CLOSED로 변경, closedAt 설정
 
         postRepository.findById(party.getPostId())
                 .ifPresent(post -> post.updateStatus(PostStatus.CLOSED));
+
+            eventPublisher.publishEvent(new PartyStatusChangedEvent(
+                    party.getId(), prevStatus, party.getStatus()
+            ));
         }
     }
 }

@@ -31,8 +31,10 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
     @Query("SELECT pm FROM PartyMember pm JOIN FETCH pm.party WHERE pm.user.id = :userId ORDER BY pm.joinedAt DESC")
     List<PartyMember> findAllByUserIdWithParty(@Param("userId") Long userId);
 
-    long countByParty_PostId(Long postId);
+    long countByPartyId(Long partyId);
     List<PartyMember> findAllByParty_PostId(Long postId);
 
     int countByPartyIdAndState(Long partyId, PartyMemberState partyMemberState);
+
+    List<PartyMember> findAllByPartyId(Long partyId);
 }
