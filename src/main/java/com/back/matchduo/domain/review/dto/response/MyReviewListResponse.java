@@ -9,6 +9,7 @@ public record MyReviewListResponse(
     Long reviewId,
     Long revieweeId,
     String revieweeNickname,
+    String revieweeProfileImage,
     ReviewEmoji emoji,
     String content,
     LocalDateTime createdAt
@@ -18,6 +19,7 @@ public record MyReviewListResponse(
             review.getId(),
             review.getReviewee().getId(),
             review.getReviewee().getNickname(),
+            review.getReviewee().getProfileImage(),
             review.getEmoji(),
             review.getContent(),
             review.getCreatedAt()

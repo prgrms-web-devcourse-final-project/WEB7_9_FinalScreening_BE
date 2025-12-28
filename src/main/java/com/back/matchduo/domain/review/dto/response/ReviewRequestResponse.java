@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 
 public record ReviewRequestResponse(
         Long reviewRequestId,
-        Long postId,
-        String postMemo,
+        Long partyId,
         ReviewRequestStatus status,
         LocalDateTime createdAt,
         LocalDateTime expiresAt
@@ -16,8 +15,7 @@ public record ReviewRequestResponse(
     public static ReviewRequestResponse from(ReviewRequest request) {
         return new ReviewRequestResponse(
             request.getId(),
-            request.getPost().getId(),
-            request.getPost().getMemo(),
+            request.getParty().getId(),
             request.getStatus(),
             request.getCreatedAt(),
             request.getExpiresAt()

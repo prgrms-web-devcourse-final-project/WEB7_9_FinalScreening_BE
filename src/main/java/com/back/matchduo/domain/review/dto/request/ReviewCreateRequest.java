@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ReviewCreateRequest(
-        @NotNull(message = "모집글 ID는 필수입니다.")
-        Long postId,
+        @NotNull(message = "소속파티 ID는 필수입니다.")
+        Long partyId,
 
         @NotNull(message = "리뷰 대상자 ID는 필수입니다.")
         Long revieweeId,
