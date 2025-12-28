@@ -97,7 +97,10 @@ public class SecurityConfig {
                                 "/api/v1/parties/*/members"
                         ).permitAll()
 
+                        // 리뷰 조회(GET) 공개
                         .requestMatchers(HttpMethod.GET,
+                                "api/v1/reviews",
+                                "/api/v1/reviews/users/{userId}",
                                 "/api/v1/reviews/users/{userId}/distribution"
                         ).permitAll()
                         // TODO: 공개 API는 여기 추가
