@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 public record UserProfileResponse(
         @Schema(description = "유저 ID", example = "1")
         Long id,
@@ -26,20 +28,24 @@ public record UserProfileResponse(
 
         @Schema(description = "자기소개", example = "자기 소개입니다")
         @Size(max = 40, message = "자기소개는 최대 40글자까지 작성할 수 있습니다.")
-        String comment
+        String comment,
+
+        @Schema(description = "닉네임 최근 수정 시각", example = "2025-01-01T12:00:00")
+        LocalDateTime nicknameUpdatedAt
 ) {
 
-    public static UserProfileResponse from(User user, String baseUrl) { // 수정한 부분
+    public static UserProfileResponse from(User user, String baseUrl) {
         String fullProfileImage = user.getProfileImage() == null
                 ? null
-                : baseUrl + user.getProfileImage(); // 수정한 부분
+                : baseUrl + user.getProfileImage();
 
         return new UserProfileResponse(
                 user.getId(),
                 user.getEmail(),
-                fullProfileImage, // 수정한 부분
+                fullProfileImage,
                 user.getNickname(),
-                user.getComment()
+                user.getComment(),
+                user.getNicknameUpdatedAt()
         );
     }
 }
