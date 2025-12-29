@@ -4,11 +4,11 @@ import com.back.matchduo.domain.user.dto.request.UserUpdatePasswordRequest;
 import com.back.matchduo.domain.user.dto.response.UserProfileResponse;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.domain.user.repository.UserRepository;
-import com.back.matchduo.global.config.BaseUrlProperties;
 import com.back.matchduo.global.exeption.CustomErrorCode;
 import com.back.matchduo.global.exeption.CustomException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +21,7 @@ import java.util.List;
 public class UserProfileService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public UserProfileResponse getProfile(User user) {
         User currentUser = findUser(user.getId());
@@ -89,11 +90,11 @@ public class UserProfileService {
         }
 
         // 3. 현재 비번 일치 체크
-        if (!request.password().equals(currentUser.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), currentUser.getPassword())) {
             throw new CustomException(CustomErrorCode.WRONG_CURRENT_PASSWORD);
         }
         //비밀번호 작성
-        currentUser.setPassword(request.newPassword());
+        currentUser.setPassword(passwordEncoder.encode(request.newPassword()));
     }
 
     // 이미지 업로드
