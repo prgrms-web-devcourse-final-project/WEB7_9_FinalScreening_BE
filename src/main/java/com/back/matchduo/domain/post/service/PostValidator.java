@@ -49,7 +49,7 @@ public class PostValidator {
         }
     }
 
-    // 상태 변경 제한: 클라이언트는 FINISHED만 요청 가능
+    // 상태 변경 제한: 클라이언트는 CLOSED만 요청 가능
     public void validateStatusUpdateAllowed(PostStatus status) {
         if (status != PostStatus.CLOSED) {
             throw new CustomException(CustomErrorCode.INVALID_POST_STATUS_UPDATE);

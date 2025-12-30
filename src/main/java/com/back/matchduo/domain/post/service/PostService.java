@@ -1,5 +1,7 @@
 package com.back.matchduo.domain.post.service;
 
+import com.back.matchduo.domain.party.entity.Party;
+import com.back.matchduo.domain.party.repository.PartyRepository;
 import com.back.matchduo.domain.post.dto.request.PostCreateRequest;
 import com.back.matchduo.domain.post.dto.request.PostStatusUpdateRequest;
 import com.back.matchduo.domain.post.dto.request.PostUpdateRequest;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PartyRepository partyRepository; // 👈 [추가] 파티 저장소 주입
     private final PostValidator postValidator;
     private final PostListFacade postListFacade;
 
@@ -54,6 +57,10 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
 
+        if (!post.getIsActive()) {
+            throw new CustomException(CustomErrorCode.POST_ALREADY_DELETED); // 혹은 POST_NOT_FOUND
+        }
+
         postValidator.validatePostOwner(post, userId);
         return postListFacade.updatePostWithPartyView(post, request);
     }
@@ -76,19 +83,36 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
 
+        if (!post.getIsActive()) { // getter 이름은 Entity에 따라 isActive() 또는 getIsActive()
+            throw new CustomException(CustomErrorCode.POST_ALREADY_DELETED);
+        }
+
         // postValidator.validatePostOwner(post, userId);
 
         return postListFacade.buildPostDetailForEdit(post);
     }
 
     // 삭제
-    @Transactional
     public PostDeleteResponse deletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));
 
         postValidator.validatePostOwner(post, userId);
-        post.deactivate();
+
+        if (!post.getIsActive()) {
+            throw new CustomException(CustomErrorCode.POST_ALREADY_DELETED); // 혹은 POST_NOT_FOUND
+        }
+
+        // [수정] 삭제 시 상태도 CLOSED로 변경하여 데이터 정합성 유지
+        post.updateStatus(PostStatus.CLOSED);
+        post.deactivate(); // Soft Delete
+        postRepository.save(post); // 👈 [핵심] 변경 사항 강제 저장
+
+        // Party도 종료 처리
+        Party party = partyRepository.findByPostId(postId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.PARTY_NOT_FOUND));
+        party.closeParty();
+        partyRepository.save(party); // 👈 [핵심] Party도 강제 저장
 
         return PostDeleteResponse.of(postId);
     }

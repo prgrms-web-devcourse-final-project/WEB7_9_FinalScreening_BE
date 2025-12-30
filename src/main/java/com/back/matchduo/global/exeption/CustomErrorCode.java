@@ -67,6 +67,7 @@ public enum CustomErrorCode {
     INVALID_LOOKING_POSITIONS(HttpStatus.BAD_REQUEST, "찾는 포지션 선택이 올바르지 않습니다."),
     INVALID_POST_STATUS_UPDATE(HttpStatus.BAD_REQUEST, "상태 변경은 FINISHED만 요청할 수 있습니다."),
     POST_ID_REQUIRED(HttpStatus.BAD_REQUEST, "postId는 필수입니다."),
+    POST_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 모집글입니다."),
 
 
     // 5. Chat (채팅)
