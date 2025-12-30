@@ -11,6 +11,7 @@ import java.util.List;
 public record PostCreateResponse(
         Long postId,
         Long partyId,
+        Long gameAccountId,
         String gameMode,
         QueueType queueType,
         Position myPosition,
@@ -26,6 +27,7 @@ public record PostCreateResponse(
 ) {
     public static PostCreateResponse of(Post post,
                                         Long partyId,
+                                        Long gameAccountId,
                                         List<Position> lookingPositions,
                                         Integer currentParticipants,
                                         PostWriter writer,
@@ -33,6 +35,7 @@ public record PostCreateResponse(
         return new PostCreateResponse(
                 post.getId(),
                 partyId,
+                gameAccountId,
                 post.getGameMode().name(),
                 post.getQueueType(),
                 post.getMyPosition(),

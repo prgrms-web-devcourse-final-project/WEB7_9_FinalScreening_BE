@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.post.service;
 
+import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.party.entity.Party;
 import com.back.matchduo.domain.party.entity.PartyMember;
 import com.back.matchduo.domain.party.entity.PartyMemberRole;
@@ -45,6 +46,7 @@ public class PostListFacade {
 
     private final PartyRepository partyRepository;
     private final PartyMemberRepository partyMemberRepository;
+    private final GameAccountRepository gameAccountRepository;
 
     private final PostValidator postValidator;
     private final PostListQueryRepository postListQueryRepository;
@@ -60,6 +62,13 @@ public class PostListFacade {
         postValidator.validateCreate(request);
 
 
+        // 게임 계정 검증
+        // 요청받은 gameAccountId가 존재하는지, 그리고 현재 로그인한 유저의 것이 맞는지 확인
+        GameAccount gameAccount = gameAccountRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.GAME_ACCOUNT_NOT_FOUND));
+
+        // =================================================================
+
         // lookingPositions 직렬화
         String lookingPositionsJson = serializePositions(request.lookingPositions());
 
@@ -69,6 +78,7 @@ public class PostListFacade {
         // Post 저장
         Post post = Post.builder()
                 .user(writerRef)
+                .gameAccount(gameAccount)
                 .gameMode(request.gameMode()) // [변경] Request의 Enum 값을 바로 사용
                 .queueType(request.queueType())
                 .myPosition(request.myPosition())
@@ -109,7 +119,7 @@ public class PostListFacade {
                 )
         );
 
-        return PostCreateResponse.of(saved, party.getId(),  lookingPositions, 1, writerDto, participants);
+        return PostCreateResponse.of(saved, party.getId(), gameAccount.getGameAccountId(), lookingPositions, 1, writerDto, participants);
     }
 
     // 모집글 수정 + 화면용 응답 조립

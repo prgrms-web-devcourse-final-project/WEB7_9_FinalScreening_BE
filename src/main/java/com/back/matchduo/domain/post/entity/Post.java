@@ -1,5 +1,6 @@
 package com.back.matchduo.domain.post.entity;
 
+import com.back.matchduo.domain.gameaccount.entity.GameAccount;
 import com.back.matchduo.domain.user.entity.User;
 import com.back.matchduo.global.entity.SoftDeletableEntity;
 import jakarta.persistence.*;
@@ -22,6 +23,10 @@ public class Post extends SoftDeletableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(name = "gameAccount_id", nullable = false)
+    private GameAccount gameAccount;
 
     @Enumerated(EnumType.STRING) // DB에는 "SUMMONERS_RIFT" 문자열로 저장됨
     @Column(name = "game_mode", nullable = false)
@@ -52,9 +57,10 @@ public class Post extends SoftDeletableEntity {
     private String memo;
 
     @Builder
-    public Post(User user, GameMode gameMode, QueueType queueType, Position myPosition,
+    public Post(User user, GameAccount gameAccount,GameMode gameMode, QueueType queueType, Position myPosition,
                 String lookingPositions, Boolean mic, Integer recruitCount, String memo) {
         this.user = user;
+        this.gameAccount = gameAccount;
         this.gameMode = gameMode;
         this.queueType = queueType;
         this.myPosition = myPosition;

@@ -20,5 +20,5 @@ public interface GameAccountRepository extends JpaRepository<GameAccount, Long> 
      * @param userId 유저 ID
      * @return 게임 계정 목록
      */
-    List<GameAccount> findByUser_Id(Long userId);
+    Optional<GameAccount> findByUser_Id(Long userId);
 }
