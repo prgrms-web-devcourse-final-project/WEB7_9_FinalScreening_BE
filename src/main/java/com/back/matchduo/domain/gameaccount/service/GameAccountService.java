@@ -52,7 +52,7 @@ public class GameAccountService {
         this.rankService = rankService;
         this.matchService = matchService;
     }
-    
+
     private static final String GAME_TYPE_LEAGUE_OF_LEGENDS = "LEAGUE_OF_LEGENDS";
     private static final String GAME_TYPE_LEAGUE_OF_LEGENDS_KR = "리그 오브 레전드";
     private static final String PROFILE_ICON_BASE_URL = "https://ddragon.leagueoflegends.com/cdn/%s/img/profileicon/%d.png";
@@ -79,7 +79,7 @@ public class GameAccountService {
         String puuid = null;
         try {
             RiotApiDto.AccountResponse accountResponse = riotApiClient.getAccountByRiotId(
-                    request.getGameNickname(), 
+                    request.getGameNickname(),
                     request.getGameTag()
             );
             puuid = accountResponse != null ? accountResponse.getPuuid() : null;
@@ -91,7 +91,7 @@ public class GameAccountService {
                 if (cause instanceof HttpClientErrorException httpError) {
                     if (httpError.getStatusCode() == HttpStatus.NOT_FOUND) {
                         // 404 에러: 존재하지 않는 게임 계정
-                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}", 
+                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}",
                                 request.getGameNickname(), request.getGameTag());
                         throw new CustomException(CustomErrorCode.RIOT_ACCOUNT_NOT_FOUND);
                     }
@@ -99,7 +99,7 @@ public class GameAccountService {
                 cause = cause.getCause();
             }
             // 네트워크 오류 등 기타 예외는 로그만 남기고 계속 진행
-            log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid 없이 계정 생성합니다.", 
+            log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid 없이 계정 생성합니다.",
                     request.getGameNickname(), request.getGameTag(), e.getMessage());
             // Riot API 호출 실패 시에도 계정은 생성 (puuid는 null)
         }
@@ -172,13 +172,13 @@ public class GameAccountService {
      */
     @Transactional(readOnly = true)
     public List<GameAccountResponse> getUserGameAccounts(Long userId) {
-        List<GameAccount> gameAccounts = gameAccountRepository.findByUser_Id(userId);
-        
-        return gameAccounts.stream()
+
+        return gameAccountRepository.findByUser_Id(userId)
+                .stream()
                 .map(gameAccount -> {
                     // DB에서 프로필 아이콘 URL 생성
                     String profileIconUrl = getProfileIconUrl(gameAccount.getProfileIconId());
-                    
+
                     return GameAccountResponse.builder()
                             .gameAccountId(gameAccount.getGameAccountId())
                             .gameNickname(gameAccount.getGameNickname())
@@ -228,7 +228,7 @@ public class GameAccountService {
                 if (cause instanceof HttpClientErrorException httpError) {
                     if (httpError.getStatusCode() == HttpStatus.NOT_FOUND) {
                         // 404 에러: 존재하지 않는 게임 계정
-                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}", 
+                        log.warn("Riot API 호출 실패 (404): gameNickname={}, gameTag={}",
                                 request.getGameNickname(), request.getGameTag());
                         throw new CustomException(CustomErrorCode.RIOT_ACCOUNT_NOT_FOUND);
                     }
@@ -236,7 +236,7 @@ public class GameAccountService {
                 cause = cause.getCause();
             }
             // 네트워크 오류 등 기타 예외는 로그만 남기고 기존 puuid 유지
-            log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid는 기존 값을 유지합니다.", 
+            log.warn("Riot API 호출 실패: gameNickname={}, gameTag={}, error={}. puuid는 기존 값을 유지합니다.",
                     request.getGameNickname(), request.getGameTag(), e.getMessage());
             // Riot API 호출 실패 시 기존 puuid 유지
             puuid = gameAccount.getPuuid();
@@ -244,7 +244,7 @@ public class GameAccountService {
 
         // puuid가 변경된 경우 이전 계정의 매치 정보 삭제 (한 개의 puuid 정보만 유지)
         if (oldPuuid != null && puuid != null && !oldPuuid.equals(puuid)) {
-            log.info("게임 계정 puuid 변경 감지: gameAccountId={}, oldPuuid={}, newPuuid={}", 
+            log.info("게임 계정 puuid 변경 감지: gameAccountId={}, oldPuuid={}, newPuuid={}",
                     gameAccountId, oldPuuid, puuid);
             matchService.deleteMatchesByGameAccountId(gameAccountId);
             log.info("이전 계정의 매치 정보 삭제 완료: gameAccountId={}", gameAccountId);
@@ -304,7 +304,7 @@ public class GameAccountService {
 
         // 게임 계정 삭제
         gameAccountRepository.delete(gameAccount);
-        log.info("게임 계정 삭제 완료: gameAccountId={}, gameNickname={}, gameTag={}", 
+        log.info("게임 계정 삭제 완료: gameAccountId={}, gameNickname={}, gameTag={}",
                 gameAccountId, gameAccount.getGameNickname(), gameAccount.getGameTag());
     }
 
@@ -319,7 +319,7 @@ public class GameAccountService {
             return null;
         }
 
-        if (!GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameType) && 
+        if (!GAME_TYPE_LEAGUE_OF_LEGENDS.equals(gameType) &&
             !GAME_TYPE_LEAGUE_OF_LEGENDS_KR.equals(gameType)) {
             return null;
         }
@@ -342,14 +342,14 @@ public class GameAccountService {
      */
     public Integer refreshProfileIconId(GameAccount gameAccount) {
         Integer profileIconId = fetchProfileIconId(gameAccount.getPuuid(), gameAccount.getGameType());
-        
+
         if (profileIconId != null) {
             gameAccount.updateProfileIconId(profileIconId);
             gameAccountRepository.save(gameAccount);
-            log.info("프로필 아이콘 갱신 완료: gameAccountId={}, profileIconId={}", 
+            log.info("프로필 아이콘 갱신 완료: gameAccountId={}, profileIconId={}",
                     gameAccount.getGameAccountId(), profileIconId);
         }
-        
+
         return profileIconId;
     }
 
@@ -381,15 +381,15 @@ public class GameAccountService {
      */
     public RefreshAllResponse refreshAll(Long gameAccountId, Long userId, int matchCount) {
         log.info("통합 전적 갱신 시작: gameAccountId={}, 요청 userId={}, matchCount={}", gameAccountId, userId, matchCount);
-        
+
         // 1. 랭크 정보 갱신
         var ranks = rankService.refreshRankData(gameAccountId, userId);
         log.info("랭크 정보 갱신 완료: gameAccountId={}, 갱신된 랭크 개수={}", gameAccountId, ranks.size());
-        
+
         // 2. 매치 정보 갱신
         var matches = matchService.refreshMatchHistory(gameAccountId, userId, matchCount);
         log.info("매치 정보 갱신 완료: gameAccountId={}, 갱신된 매치 개수={}", gameAccountId, matches.size());
-        
+
         return RefreshAllResponse.builder()
                 .ranks(ranks)
                 .matches(matches)
