@@ -25,7 +25,7 @@ public class Post extends SoftDeletableEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "gameAccount_id", nullable = false)
+    @JoinColumn(name = "gameAccount_id", nullable = false)
     private GameAccount gameAccount;
 
     @Enumerated(EnumType.STRING) // DB에는 "SUMMONERS_RIFT" 문자열로 저장됨
