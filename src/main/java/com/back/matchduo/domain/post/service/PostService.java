@@ -93,6 +93,7 @@ public class PostService {
     }
 
     // 삭제
+    @Transactional
     public PostDeleteResponse deletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.POST_NOT_FOUND));

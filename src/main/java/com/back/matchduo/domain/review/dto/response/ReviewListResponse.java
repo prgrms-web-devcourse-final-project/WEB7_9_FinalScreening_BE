@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record ReviewListResponse(
         Long reviewId,
         Long reviewerId,
+        Long revieweeId,
         String reviewerNickname,
         String revieweeNickname,
         String reviewerProfileImage,
@@ -19,6 +20,7 @@ public record ReviewListResponse(
         return new ReviewListResponse(
             review.getId(),
             review.getReviewer().getId(),
+            review.getReviewee().getId(),
             review.getReviewer().getNickname(),
             review.getReviewee().getNickname(),
             review.getReviewer().getProfileImage(),
