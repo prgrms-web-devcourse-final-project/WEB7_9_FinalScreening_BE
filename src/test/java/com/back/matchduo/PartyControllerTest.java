@@ -2,6 +2,8 @@ package com.back.matchduo;
 
 import com.back.matchduo.domain.chat.entity.ChatRoom;
 import com.back.matchduo.domain.chat.repository.ChatRoomRepository;
+import com.back.matchduo.domain.gameaccount.entity.GameAccount;
+import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.party.dto.request.PartyMemberAddRequest;
 import com.back.matchduo.domain.party.entity.Party;
@@ -62,7 +64,12 @@ class PartyControllerTest {
     @Autowired
     private ChatRoomRepository chatRoomRepository;
 
+    @Autowired
+    private GameAccountRepository gameAccountRepository;
+
     private Long testPostId;
+    private GameAccount leaderGameAccount;
+    private GameAccount targetUser1GameAccount;
     private User leaderUser;
     private User memberUser;
     private Party testParty;
@@ -82,6 +89,7 @@ class PartyControllerTest {
                 .email("leader@test.com")
                 .password("1234")
                 .nickname("파티장")
+                .profileImage(LEADER_IMG)
                 .verificationCode("1234")
                 .build();
         userRepository.save(leaderUser);
@@ -91,17 +99,27 @@ class PartyControllerTest {
                 .email("member@test.com")
                 .password("1234")
                 .nickname("파티원")
+                .profileImage(MEMBER_IMG)
                 .verificationCode("5678")
                 .build();
         userRepository.save(memberUser);
 
-        // 3. 모집글(Post) 생성을 위한 GameMode 저장
+        // 3. 게임 계정 생성 (Post에 필요)
+        leaderGameAccount = gameAccountRepository.save(GameAccount.builder()
+                .gameNickname("리더닉네임")
+                .gameTag("KR1")
+                .gameType("LOL")
+                .user(leaderUser)
+                .build());
+
+        // 4. 모집글(Post) 생성을 위한 GameMode 저장
         GameMode gameMode = GameMode.SUMMONERS_RIFT;
 
-        // 4. 모집글(Post) 생성 및 저장
+        // 5. 모집글(Post) 생성 및 저장
         // memo를 제목으로 사용하므로 "테스트 모집글"이 제목이 됨
         Post post = Post.builder()
                 .user(leaderUser)
+                .gameAccount(leaderGameAccount)
                 .gameMode(gameMode)
                 .queueType(QueueType.DUO)
                 .myPosition(Position.TOP)
@@ -132,6 +150,14 @@ class PartyControllerTest {
         targetUser2 = User.builder()
                 .email("target2@test.com").password("1234").nickname("초대대상2").verificationCode("0000").build();
         userRepository.save(targetUser2);
+
+        // 8. targetUser1용 게임 계정 생성
+        targetUser1GameAccount = gameAccountRepository.save(GameAccount.builder()
+                .gameNickname("초대대상1닉네임")
+                .gameTag("KR2")
+                .gameType("LOL")
+                .user(targetUser1)
+                .build());
     }
 
     @Nested
@@ -419,6 +445,7 @@ class PartyControllerTest {
             // 2. 두 번째 모집글 생성 (memo를 제목으로 사용)
             Post secondPost = Post.builder()
                     .user(targetUser1) // targetUser1이 쓴 글
+                    .gameAccount(targetUser1GameAccount)
                     .gameMode(flexMode)
                     .queueType(QueueType.FLEX)
                     .myPosition(Position.MID)
@@ -623,6 +650,7 @@ class PartyControllerTest {
             // 새로운 모집글 생성 (채팅 기록 없음)
             Post newPost = Post.builder()
                     .user(leaderUser)
+                    .gameAccount(leaderGameAccount)
                     .gameMode(GameMode.SUMMONERS_RIFT) // [변경] Enum 상수 직접 사용
                     .queueType(QueueType.DUO)
                     .myPosition(Position.ADC)

@@ -18,8 +18,8 @@ RUN ./gradlew dependencies --no-daemon
 # 소스 코드 복사
 COPY src src
 
-# 애플리케이션 빌드
-RUN ./gradlew bootJar --no-daemon -x test
+# 애플리케이션 빌드 (clean으로 캐시 제거)
+RUN ./gradlew clean bootJar --no-daemon -x test
 
 # 두 번째 스테이지: 실행 스테이지
 FROM container-registry.oracle.com/graalvm/jdk:23

@@ -74,6 +74,16 @@ jobs:
         id: export_image
         run: echo "image_name=matchmyduo" >> $GITHUB_OUTPUT
 
+      - name: JAR 빌드 및 검증
+        run: |
+          echo "${{ secrets.APPLICATION_SECRET }}" > src/main/resources/application-secret.yml
+          ./gradlew clean bootJar -x test
+          echo "=== ReviewController 클래스 확인 ==="
+          jar tf build/libs/*.jar | grep ReviewController || echo "ReviewController not found!"
+          echo "=== getAllReviews 메서드 확인 ==="
+          cd build/libs && jar xf *.jar BOOT-INF/classes/com/back/matchduo/domain/review/controller/ReviewController.class
+          javap -p BOOT-INF/classes/com/back/matchduo/domain/review/controller/ReviewController.class | grep -E "getAllReviews|GetMapping" || echo "getAllReviews not found!"
+
       - name: 빌드 앤 푸시
         uses: docker/build-push-action@v3
         with:

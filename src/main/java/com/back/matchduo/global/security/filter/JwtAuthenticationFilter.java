@@ -34,8 +34,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // accessToken 쿠키에서 JWT 추출
-        String accessToken = extractCookie(request, AuthCookieProvider.ACCESS_TOKEN_COOKIE);
+        // 1. Authorization 헤더에서 Bearer 토큰 추출 시도
+        String accessToken = extractBearerToken(request);
+
+        // 2. Authorization 헤더에 없으면 쿠키에서 추출
+        if (accessToken == null) {
+            accessToken = extractCookie(request, AuthCookieProvider.ACCESS_TOKEN_COOKIE);
+        }
 
         if (accessToken != null && !accessToken.isBlank()) {
             try {
@@ -70,6 +75,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 
     private String extractCookie(HttpServletRequest request, String cookieName) {

@@ -53,4 +53,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("DELETE FROM ChatMessage m WHERE m.createdAt < :threshold")
     int deleteOldMessages(@Param("threshold") LocalDateTime threshold);
 
+    /** 채팅방 메시지 수 조회 **/
+    long countByChatRoomId(Long chatRoomId);
 }

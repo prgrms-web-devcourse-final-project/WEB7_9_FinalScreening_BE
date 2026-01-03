@@ -6,6 +6,8 @@ import com.back.matchduo.domain.chat.entity.ChatMessage;
 import com.back.matchduo.domain.chat.entity.ChatMessageRead;
 import com.back.matchduo.domain.chat.entity.ChatRoom;
 import com.back.matchduo.domain.chat.entity.MessageType;
+import com.back.matchduo.domain.gameaccount.entity.GameAccount;
+import com.back.matchduo.domain.gameaccount.repository.GameAccountRepository;
 import com.back.matchduo.domain.post.entity.GameMode;
 import com.back.matchduo.domain.post.entity.Position;
 import com.back.matchduo.domain.post.entity.Post;
@@ -41,8 +43,12 @@ class ChatServiceTest {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private GameAccountRepository gameAccountRepository;
+
     private User postAuthor;
     private User applicant;
+    private GameAccount gameAccount;
     private Post testPost;
 
     @BeforeEach
@@ -61,10 +67,17 @@ class ChatServiceTest {
                 .verificationCode("5678")
                 .build());
 
+        gameAccount = gameAccountRepository.save(GameAccount.builder()
+                .gameNickname("테스트게임닉네임")
+                .gameTag("KR1")
+                .gameType("LOL")
+                .user(postAuthor)
+                .build());
 
         testPost = postRepository.save(Post.builder()
                 .user(postAuthor)
-                .gameMode(GameMode.SUMMONERS_RIFT) // [변경] Enum 상수명에 맞게 수정 (예: SUMMONERS_RIFT)
+                .gameAccount(gameAccount)
+                .gameMode(GameMode.SUMMONERS_RIFT)
                 .queueType(QueueType.DUO)
                 .myPosition(Position.MID)
                 .lookingPositions("[\"TOP\", \"JUNGLE\"]")
