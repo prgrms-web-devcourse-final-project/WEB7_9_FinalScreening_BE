@@ -99,7 +99,7 @@ public class SecurityConfig {
 
                         // 리뷰 조회(GET) 공개
                         .requestMatchers(HttpMethod.GET,
-                                "/api/v1/reviews",
+                                "/api/v1/reviews/all",
                                 "/api/v1/reviews/users/{userId}",
                                 "/api/v1/reviews/users/{userId}/distribution"
                         ).permitAll()
