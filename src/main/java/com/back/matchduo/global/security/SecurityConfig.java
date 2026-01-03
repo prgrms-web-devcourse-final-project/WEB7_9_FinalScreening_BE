@@ -72,7 +72,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         //타인 프로필 조회(GET) 허용
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users/{userId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*").permitAll()
 
                         // Auth API는 모두 허용
                         .requestMatchers(
@@ -100,8 +100,8 @@ public class SecurityConfig {
                         // 리뷰 조회(GET) 공개
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/reviews",
-                                "/api/v1/reviews/users/{userId}",
-                                "/api/v1/reviews/users/{userId}/distribution"
+                                "/api/v1/reviews/users/*",
+                                "/api/v1/reviews/users/*/distribution"
                         ).permitAll()
                         // TODO: 공개 API는 여기 추가
                         // 예: 모집글 목록/상세, 게임모드 목록 등
